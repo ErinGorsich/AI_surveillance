@@ -82,13 +82,131 @@ for (i in 1:length(data$collection.date.init)) {
 }
 
 #converts months from words to numbers
-data$collection.month[ai2$collection.month == "Aug"] <- "08"
-data$collection.month[ai2$collection.month == "Dec"] <- "12"
-data$collection.month[ai2$collection.month == "Feb"] <- "02"
-data$collection.month[ai2$collection.month == "Jan"] <- "01"
-data$collection.month[ai2$collection.month == "Jul"] <- "07"
-data$collection.month[ai2$collection.month == "Jun"] <- "06"
-data$collection.month[ai2$collection.month == "May"] <- "05"
-data$collection.month[ai2$collection.month == "Nov"] <- "11"
-data$collection.month[ai2$collection.month == "Oct"] <- "10"
-data$collection.month[ai2$collection.month == "Sep"] <- "09"
+data$collection.month[data$collection.month == "Aug"] <- "08"
+data$collection.month[data$collection.month == "Dec"] <- "12"
+data$collection.month[data$collection.month == "Feb"] <- "02"
+data$collection.month[data$collection.month == "Jan"] <- "01"
+data$collection.month[data$collection.month == "Jul"] <- "07"
+data$collection.month[data$collection.month == "Jun"] <- "06"
+data$collection.month[data$collection.month == "May"] <- "05"
+data$collection.month[data$collection.month == "Nov"] <- "11"
+data$collection.month[data$collection.month == "Oct"] <- "10"
+data$collection.month[data$collection.month == "Sep"] <- "09"
+
+#creates a column with the complete date in the number form
+data$collection.date.char <- paste(data$collection.month, data$collection.day, data$collection.year, sep = "-")
+#creates a column to put the dates in year, month, day form
+data$collection.date <- mdy(data$collection.date.char)
+
+backup.dates <- data
+######################################################################################
+#Sample Type
+######################################################################################
+
+# remove sentinal species
+OC <- data[data$sample.type == "Oral + Cloacal", ]
+CS <- data[data$sample.type == "Cloacal Swab", ]
+OP <- data[data$sampl.type == "Oropharyngeal", ]
+TS <- data[data$sample.type == "Tracheal Swab", ]
+
+#remove samples that are not of Oral+Cloacal type
+data <- data[data$sample.type == "Oral + Cloacal", ]
+
+backup.type <- data
+
+#####################################################################################
+#Disease Columns
+#####################################################################################
+
+#ultimately, test results follow the national lab
+data$AIpcr <- "NoResult"
+data$AIpcr[data$regional_AIpcr == "ND"] <- "NEG"
+data$AIpcr[data$regional_AIpcr == "SUS"] <- "SUS"
+data$AIpcr[data$regional_AIpcr == "DET" & data$NVSL_AIpcr == ""] <- "POS"
+data$AIpcr[data$regional_AIpcr == "DET" & data$NVSL_AIpcr == "DET"] <- "POS"
+data$AIpcr[data$regional_AIpcr == "DET" & data$NVSL_AIpcr == "ND"] <- "NEG"
+data$AIpcr[data$regional_AIpcr == "" & data$NVSL_AIpcr == "ND"] <- "NEG"
+data$AIpcr[data$regional_AIpcr == "" & data$NVSL_AIpcr == "DET"] <- "POS"
+
+#suspected results are considered to be negative
+data$AIpcr_susneg <- "NoResult"
+data$AIpcr_susneg[data$AIpcr == "NEG"] <- "negative"
+data$AIpcr_susneg[data$AIpcr == "SUS"] <- "negative"
+data$AIpcr_susneg[data$AIpcr == "POS"] <- "positive"
+
+#H5 results are ultimately determined by the national lab, but default to regional lab
+data$H5pcr <- "No Result"
+data$H5pcr[data$regional_H5pcr == "ND" & data$NVSL_H5pcr == ""] <- "NEG"
+data$H5pcr[data$regional_H5pcr == "ND" & data$NVSL_H5pcr == "DET"] <- "POS"
+data$H5pcr[data$regional_H5pcr == "ND" & data$NVSL_H5pcr == "ND"] <- "NEG"
+data$H5pcr[data$regional_H5pcr == "SUS" & data$NVSL_H5pcr == "DET"] <- "POS"
+data$H5pcr[data$regional_H5pcr == "SUS" & data$NVSL_H5pcr == "ND"] <- "NEG"
+data$H5pcr[data$regional_H5pcr == "DET" & data$NVSL_H5pcr == ""] <- "POS"
+data$H5pcr[data$regional_H5pcr == "DET" & data$NVSL_H5pcr == "DET"] <- "POS"
+data$H5pcr[data$regional_H5pcr == "DET" & data$NVSL_H5pcr == "ND"] <- "NEG"
+data$H5pcr[data$regional_H5pcr == "" & data$NVSL_H5pcr == "DET"] <- "POS"
+data$H5pcr[data$regional_H5pcr == "" & data$NVSL_H5pcr == "ND"] <- "NEG"
+data$H5pcr[data$AIpcr_susneg == "negative" & data$H5pcr == "NoResult"] <- "NEG"
+
+#H7 results are ultimately determined by the national lab, but default to the regional lab
+data$H7pcr <- "No Result"
+data$H7pcr[data$regional_H7pcr == "ND" & data$NVSL_H7pcr == ""] <- "NEG"
+data$H7pcr[data$regional_H7pcr == "ND" & data$NVSL_H7pcr == "DET"] <- "POS"
+data$H7pcr[data$regional_H7pcr == "ND" & data$NVSL_H7pcr == "ND"] <- "NEG"
+data$H7pcr[data$regional_H7pcr == "SUS" & data$NVSL_H7pcr == "DET"] <- "POS"
+data$H7pcr[data$regional_H7pcr == "SUS" & data$NVSL_H7pcr == "ND"] <- "NEG"
+data$H7pcr[data$regional_H7pcr == "DET" & data$NVSL_H7pcr == ""] <- "POS"
+data$H7pcr[data$regional_H7pcr == "DET" & data$NVSL_H7pcr == "DET"] <- "POS"
+data$H7pcr[data$regional_H7pcr == "DET" & data$NVSL_H7pcr == "ND"] <- "NEG"
+data$H7pcr[data$regional_H7pcr == "" & data$NVSL_H7pcr == "DET"] <- "POS"
+data$H7pcr[data$regional_H7pcr == "" & data$NVSL_H7pcr == "ND"] <- "NEG"
+data$H7pcr[data$AIpcr_susneg == "negative" & data$H7pcr == "NoResult"] <- "NEG"
+
+#change no result to unknown
+data$AIpcr_susneg[data$AIpcr_susneg == "NoResult"] <- "UNKN"
+data$H5pcr[data$AIpcr == "NoResult"] <- "UNKN"
+data$H7pcr[data$H7pcr == "NoResult"] <- "UNKN"
+
+#change characters into factors
+data$AIpcr_susneg <- as.factor(data$AIpcr_susneg)
+data$H5pcr <- as.factor(data$H5pcr)
+data$H7pcr <- as.factor(data$H7pcr)
+
+backup.test <- data
+
+setwd("~/Github")
+saveRDS(data, "AVHS_samplingevent.rds")
+
+######################################################################################
+#remove years of data with low sampling numbers and 2016
+#####################################################################################
+data <- data[!(data$collection.year %in% c("2011", "2014", "2016", "2017")), ]
+
+backup.year <- data
+
+###################################################################################
+#Add Sampling Events
+###################################################################################
+#create a data frame to match all possible sampling locations to all possible weeks, months, years
+  #month = 28 day period (13/year)
+  #weeks belong to the month of the first day of the week
+
+locations <- unique(cbind(data$long, data$lat))
+total.locations <- length(locations[,1])
+total.years <- length(unique(data$collection.year))
+total.weeks <- 52 * total.years
+
+location.x <- rep(locations[ ,1], total.weeks)
+location.y <- rep(locations[, 2], total.weeks)
+week <- rep(seq(1,total.weeks, 1), each = total.locations)
+month <- rep(rep(seq(1, 13, 1), each = 4*total.locations), total.years)
+years <- rep(c("2007", "2008", "2009", "2010", "2015"), each = total.locations*52)
+
+assign.event <- data.frame(location.x = location.x, location.y=location.y, week=week,
+                           month = month, year = year)
+
+#find location, month, year combinations with data and assign a sample event number to each
+#add a sample event column to the main dataset that assigns a sample event number to each sample
+
+
+
