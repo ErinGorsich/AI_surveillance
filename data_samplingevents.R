@@ -6,7 +6,7 @@ library(stringr)
 ##################################################################################
 #data read in
 #################################################################################
-setwd("~/HP/Data")
+setwd("~/Honors Thesis/Project")
 data <- read.csv("FluA_FY07toFY16_Webb.csv")
 
 colnames(data) <- c("subjectID", "barcode", "band", "species.code.full", 
@@ -174,15 +174,15 @@ data$H7pcr <- as.factor(data$H7pcr)
 
 backup.test <- data
 
-setwd("~/Github")
-saveRDS(data, "AVHS_samplingevent.rds")
-
 ######################################################################################
 #remove years of data with low sampling numbers and 2016
 #####################################################################################
 data <- data[!(data$collection.year %in% c("2011", "2014", "2016", "2017")), ]
 
 backup.year <- data
+
+setwd("~/Github")
+saveRDS(data, "AVHS_samplingevent.rds")
 
 ###################################################################################
 #Add Sampling Events
@@ -200,12 +200,41 @@ location.x <- rep(locations[ ,1], total.weeks)
 location.y <- rep(locations[, 2], total.weeks)
 week <- rep(seq(1,total.weeks, 1), each = total.locations)
 month <- rep(rep(seq(1, 13, 1), each = 4*total.locations), total.years)
-years <- rep(c("2007", "2008", "2009", "2010", "2015"), each = total.locations*52)
+year <- rep(c("2007", "2008", "2009", "2010", "2015"), each = total.locations*52)
 
 assign.event <- data.frame(location.x = location.x, location.y=location.y, week=week,
                            month = month, year = year)
 
 #find location, month, year combinations with data and assign a sample event number to each
+  #add a week number column to the sampling data
+data$collection.date.transformed <- mdy(data$collection.date.char)
+data$week <- week(data$collection.date.transformed)
+data$year <- NA
+for (i in 1:length(data$collection.year)) {
+  if (data[i, ]$collection.year == "2007") {
+    data[i, ]$year <- 0
+  } else if (data[i, ]$collection.year == "2008") {
+    data[i, ]$year <- 1
+  } else if (data[i, ]$collection.year == "2009") {
+    data[i, ]$year <- 2
+  } else if (data[i, ]$collection.year == "2010") {
+    data[i, ]$year <- 3
+  } else if (data[i, ]$collection.year == "2015") {
+    data[i, ]$year <- 4
+  }
+}
+data$week.intermediate <- NA
+for (i in 1:10) {
+  if (data[i, ]$week == "53") {
+    data[i, ]$week <- "52"
+  } else {
+    data[i, ]$week <- data[i, ]$week
+  }
+} 
+data$week.final <- NA
+for (i in 1:length(data$week)) {
+  data[i, ]$week.final <- (data[i,]$year*52) + data[i, ]$week
+}
 #add a sample event column to the main dataset that assigns a sample event number to each sample
 
 
