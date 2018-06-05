@@ -2,6 +2,7 @@
 
 library(lubridate)
 library(stringr)
+library(dplyr)
 
 ##################################################################################
 #data read in
@@ -187,103 +188,41 @@ saveRDS(data, "AVHS_samplingevent.rds")
 ###################################################################################
 #Add Sampling Events
 ###################################################################################
-#create a data frame to match all possible sampling locations to all possible weeks, months, years
-  #month = 28 day period (13/year)
-  #weeks belong to the month of the first day of the week
+#create a data frame to match all possible sampling locations to all possible weeks and years
+  #weeks defined by the epidemiological calendar
+
 # data <- readRDS("~/HP/Data/AVHS_samplingevent.rds")
 
-data$week <- epiweek(data$collection.date)
-data$day <- yday(data$collection.date)
-
-#assign.event
 locations <- unique(cbind(data$long, data$lat))
 total.locations <- length(locations[,1])
 total.years <- length(unique(data$collection.year))
-total.days <- 366 * total.years
-
-location.x <- rep(locations[ ,1], total.days)
-location.y <- rep(locations[, 2], total.days)
-day <- rep(seq(1, 366, 1), each = total.locations, times = total.years)
-year <- rep(c("2007", "2008", "2009", "2010", "2015"), each = total.locations*366)
-
-assign.event <- data.frame(location.x = location.x, location.y=location.y, day = day,
+total.weeks <- 53 * total.years
+location.x <- rep(locations[ ,1], total.weeks)
+location.y <- rep(locations[, 2], total.weeks)
+week <- rep(seq(1, 53, 1), each = total.locations, times = total.years)
+year <- rep(c("2007", "2008", "2009", "2010", "2015"), each = total.locations*53)
+assign.event <- data.frame(location.x = location.x, location.y=location.y, week = week,
                            year=year)
 assign.event$prelim.number <- seq(1, length(location.x), 1)
 backup.event <- assign.event
 
-test <- inner_join(data, assign.event, by = c("long"="location.x", "lat"="location.y", "day"="day", "collection.year"="year"))
-
-#start here for testing
-unique <- unique(data$prelim.number)
-temp <- assign.event  %>%
-  filter(prelim.number %in% unique)
-
 #find location, month, year combinations with data and assign a sample event number to each
-  #add a week number column to the sampling data
-# data$collection.date.transformed <- mdy(data$collection.date.char)
-# data$week <- week(data$collection.date.transformed)
-# data$year <- NA
-# for (i in 1:length(data$collection.year)) {
-#   if (data[i, ]$collection.year == "2007") {
-#     data[i, ]$year <- 0
-#   } else if (data[i, ]$collection.year == "2008") {
-#     data[i, ]$year <- 1
-#   } else if (data[i, ]$collection.year == "2009") {
-#     data[i, ]$year <- 2
-#   } else if (data[i, ]$collection.year == "2010") {
-#     data[i, ]$year <- 3
-#   } else if (data[i, ]$collection.year == "2015") {
-#     data[i, ]$year <- 4
-#   }
-# }
-# data$week.intermediate <- NA
-# for (i in 1:10) {
-#   if (data[i, ]$week == "53") {
-#     data[i, ]$week <- "52"
-#   } else {
-#     data[i, ]$week <- data[i, ]$week
-#   }
-# } 
-# data$week.final <- NA
-# for (i in 1:length(data$week)) {
-#   data[i, ]$week.final <- (data[i,]$year*52) + data[i, ]$week
-# }
-
-#assign a week (1-52) for each sample taken
+data$collection.date <- mdy(data$collection.date.char)
 data$week <- epiweek(data$collection.date)
-temp <- data[data$week == "53", ]
-temp <- na.omit(temp)
-# for (i in 1:length(data$week)) {
-#   if (data[i, ]$week == "53" & data[i, ]$collection.month == "12") {
-#     data[i, ]$week <- 52
-#   } else if (data[i, ]$week == "53" & data[i, ]$collection.month == "01") {
-#     data[i, ]$week <- 1
-#   } else {
-#     data[i, ]$week <- data[i, ]$week
-#   }
-# }
-data$week <- epiweek(data$collection.date)
-temp <- data[data$week == "53", ]
-temp <- na.omit(temp)
-for (i in 1:length(temp$week)) {
-  if (temp[i, ]$week == "53" & temp[i, ]$collection.month == "12") {
-    temp[i, ]$week <- 52
-  } else if (temp[i, ]$week == "53" & temp[i, ]$collection.month == "01") {
-    temp[i, ]$week <- 1
-  } else {
-    temp[i, ]$week <- temp[i, ]$week
-  }
-}
+data$collection.year <- as.factor(data$collection.year)
+test <- inner_join(data, assign.event, by = c("long"="location.x", "lat"="location.y", "week"="week", "collection.year"="year"))
+unique <- unique(test$prelim.number)
+temp <- filter(assign.event, prelim.number %in% unique)
+temp$event.number.week <- seq(1, length(temp$prelim.number))
+test <- inner_join(test, temp, by = c("long"="location.x", "lat"="location.y", "week"="week", "collection.year"="year",
+                                      'prelim.number'="prelim.number"))
+data <- test
+saveRDS(data, "~/Github/AVHS_sample.event.rds")
 
-data$collection.week <- temp$week[match(data$subjectID, temp$subjectID)]
-for (i in 1:length(data$collection.week)) {
-  if (data[i, ]$collection.week == "NA") {
-    data[i, ]$collection.week <- data[i, ]$week
-  } else {
-    data[i, ]$collection.week <- data[i, ]$collection.week
-  }
-}
-#add a sample event column to the main dataset that assigns a sample event number to each sample
+###########################################################################################################################
+#Add Species Group
+###########################################################################################################################
+
 
 
 
