@@ -1,5 +1,61 @@
 # Define a sequence of JAGS models for model selection
 
+################################################################
+################################################################
+# Post Thesis models accounting for sampling events
+################################################################
+################################################################
+# data needed:
+## month, year, huc = a vector with sampling events as rows; same for all species
+## nsamplingevents, nspecies, nmonths, nyears, nhucs
+
+# see example: http://www.columbia.edu/~cjd11/charles_dimaggio/DIRE/styled-4/styled-11/code-8/
+
+# See notes on priors in Chapter 5 of Gelman et al. BDA, and 
+# http://andrewgelman.com/2009/10/21/some_practical/
+sink("base_sampling_events.txt")
+cat("model {
+    #likelihood (i = month, j = year, k = huc, l = species, s = sampling events)
+    for (l in 1:nspecies){
+        for (s in 1:nsamplingevents) {
+            p[s, l] <- (Se[l] * lambda[s, l]) + ((1-Sp[l]) * (1-lamda[s, l]))
+            y[s, l] ~ dbin(p[s, l], n[s, l])
+            lambda[s, l] ~ dbeta(alpha[month[s], year[s], huc[s], l], beta[[month[s], year[s], huc[s], l])
+        }
+    }
+    
+    # Hierarchial step for lambda 
+    for (l in 1:nspecies) {
+        for (i in 1:nmonths) {
+            for (j in l:nyears) {
+                for (m in 1:nhucs) {
+                    pi[i, j, k, l] <- alpha[i, j, k, l] / (alpha[i, j, k, l] + beta[i, j, k, l])
+                    sdpi[i, j, k, l] <- 1/sqrt(alpha[i, j, k, l] + beta[i, j, k, l])
+                    pi[i, j, k, l] ~ dunif(0, 1)
+                    sdpi[i, j, k, l] ~ dt(0, 1, 1)T(0, )  # half cauchy
+                }
+            }
+        }
+    }
+    
+    #priors for Se/Sp
+    for (l in 1:nspecies) {
+        Se[l] ~ dbeta(20.833, 4.148)
+        Sp[l] ~ dbeta(8.403, 1.001)
+    }
+    }", fill = TRUE)
+sink()
+
+
+
+
+
+
+################################################################
+################################################################
+# Models used for Thesis - not accounting for sampling events
+################################################################
+################################################################
 # Base model - independence in space and time
 sink("constant_sensitivity.txt")
 cat("model{
@@ -13,7 +69,7 @@ cat("model{
         }
     }
     #priors
-    Se ~ dbeta(20.833,4.148)
+    Se ~ dbemonth[s], year[s], huc[s],ta(20.833,4.148)
     Sp ~ dbeta(8.403,1.001)
     for(i in 1:nmonths) {
         for(t in 1:nyears) {
@@ -26,8 +82,7 @@ cat("model{
 sink()
 
 
-
-# Model 2 - CAR - autocorrelation in space
+# CAR Model - autocorrelation in space (not used)
 sink("car_constant_sensitivity.txt")
 cat("model{
     # Priors
@@ -64,42 +119,7 @@ cat("model{
 sink()
 
 
-# sink("car_constant_sensitivity.txt")
-# cat("model{
-#     # Priors
-#     Se~dbeta(20.833,4.148)
-#     Sp~dbeta(8.403,1.001)
-#     
-#     # CAR Priors
-#     for (k in 1:nsites){
-#     mualpha[k] <- 0
-#     }
-#     Omega <- tau * (D - phi * W)
-#     alpha[1:nsites] ~ dmnorm(mualpha[1:nsites], Omega[1:nsites, 1:nsites])
-#     tau ~ dgamma(0.1, 0.1) # check me
-#     phi ~ dunif(-0.999, 0.999)
-#     
-#     for (i in 1:nmonths){
-#     for (j in 1:nyears){
-#     lmupi[i, j] <- log(pi0[i, j]/(1 - pi0[i, j]))
-#     pi0[i, j] ~ dunif(0, 1)
-#     }
-#     }
-#     
-#     #likelihood (i = huc, j = month, k = year)
-#     for(i in 1:nmonths){
-#     for(j in 1:nyears){
-#     for(k in 1:nsites){
-#     g[i,j,k] <- (Se*pi[i,j,k])+(1-Sp)*(1-pi[i,j,k])
-#     y[i,j,k] ~ dbin(g[i,j,k], n[i,j,k])
-#     logit(pi[i,j,k]) <- lmupi[i, j] + alpha[k]
-#     }
-#     }
-#     } 
-#     }", fill=TRUE)
-# sink()
-
-# Model 2.5 icar
+# icar Model
 sink("icar_constant_sensitivity.txt")
 cat("model{
     # Priors
@@ -132,61 +152,7 @@ cat("model{
 }", fill=TRUE)
 sink()
 
-
-
-
-
-
-
-
-
-# Model 3 - CAR - autocorrelation in space and time (months)
-sink("ar1_car_constant_sensitivity.txt")
-cat("model{
-    # Priors
-    Se~dbeta(20.833,4.148)
-    Sp~dbeta(8.403,1.001)
-    
-    # CAR Priors
-    for (k in 1:nsites){
-        mualpha[k] <- 0
-    }
-    Omega <- tau * (D - phi * W)
-    alpha[1:nsites] ~ dmnorm(mualpha[1:nsites], Omega[1:nsites, 1:nsites])
-    tau ~ dgamma(0.1, 0.1) # check me
-    phi ~ dunif(-0.999, 0.999)
-    
-    for (i in 1:nmonths){
-        for (j in 1:nyears){
-            lmupi[i, j] ~ dt(0, 0.4, 1)
-        }
-    }
-    
-    # AR1 Priors
-    month_ar1 ~ dunif(-0.01, 0.01)   
-
-    #likelihood (i = huc, j = month, k = year)
-    for(k in 1:nsites){
-        for (j in 1:nyears){}
-            g[1,j,k] <- (Se*pi[1,j,k])+(1-Sp)*(1-pi[1,j,k])
-            y[1,j,k] ~ dbin(g[1,j,k], n[1,j,k])
-            logit(pi[1,j,k]) <- lmupi[1, j] + alpha[k]
-        }
-    }
-    for(i in 2:nmonths){
-        for(j in 2:nyears){
-            for(k in 1:nsites){
-                g[i,j,k] <- (Se*pi[i,j,k])+(1-Sp)*(1-pi[i,j,k])
-                y[i,j,k] ~ dbin(g[i,j,k], n[i,j,k])
-                logit(pi[i,j,k]) <- lmupi[i, j] + alpha[k] + month_ar1*lmupi[i-1, j, k]
-            }
-        }
-    } 
-    }", fill=TRUE)
-sink()
-
-
-# Model 3 - AR1 - autocorrelation in time (months)
+# AR1 - autocorrelation in time (months)
 sink("ar1_constant_sensitivity.txt")
 cat("model{
     # Priors
