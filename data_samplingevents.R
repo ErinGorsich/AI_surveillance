@@ -3,6 +3,8 @@
 library(lubridate)
 library(stringr)
 library(dplyr)
+library(rgdal)
+library(raster)
 
 ##################################################################################
 #data read in
@@ -273,3 +275,42 @@ data <- inner_join(data, overall.df, by = c("species.code.full"="species.code"))
 
 setwd("~/Github")
 saveRDS(data, "AVHS_samplingevent_speciesgroup.rds")
+
+######################################################################################################
+#add a column to tell which watershed
+######################################################################################################
+
+setwd("~/Honors Thesis/Project/hydrologic_units")
+#setwd("~/HP/hydrologic_units)
+huc4 <- shapefile("huc4.shp")
+projection(huc4) <- CRS("+proj=longlat +ellps=WGS84")
+
+pt <- data[, c("lat", "long")]
+coordinates(pt) <- ~ long + lat
+proj4string(pt) <- CRS("+proj=longlat +ellps=WGS84")
+
+data$huc4 <- extract(huc4, pt)$HUC4
+##########################################################################################################################
+#extract number of samples, number of positive samples for each sampling event and by species group/sampling event
+##########################################################################################################################
+
+#isolate unique sampling events including the month, year, and watershed of sampling
+events <- select(data, event.number.week, collection.month, collection.year)
+events <- events[unique(events$event.number.week), ]
+
+#create a dataframe that includes the number of (positive) samples per species group per sampling event
+event <- data.frame(sample.event = rep(events$event.number.week, 7), month = rep(events$collection.month, 7),
+                    year = rep(events$collection.year, 7), watershed = NA, 
+                    species.group = rep(seq(1, 7), each = length(events$event.number.week)), n = NA, y = NA)
+
+for (i in 1:length(event$sample.event)) {
+  hold <- filter(data, event.number.week == event[i, 1])
+  holdy <- filter(hold, species.group == event[i, 5])
+  holdz <- filter(holdyhAIpcr_susneg == "positive")
+  event[i, 6] <- length(holdy$subjectID)
+  event[i, 7] <- length(holdz$subjectID)
+}
+
+setwd("~/Github")
+saveRDS(event, "samplingevent_n_y_speciesgroup.rds")
+
