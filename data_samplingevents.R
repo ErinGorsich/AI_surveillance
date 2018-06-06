@@ -222,7 +222,54 @@ saveRDS(data, "~/Github/AVHS_sample.event.rds")
 ###########################################################################################################################
 #Add Species Group
 ###########################################################################################################################
+#assigns a species group number to each sample based on species
+  #1 <- dabbling ducks (including perching ducks)
+  #2 <- diving ducks
+  #3 <- sea ducks
+  #4 <- aserines (geese and swans)
+  #5 <- shore birds
+  #6 <- sea birds
+  #7 <- land birds
+#removes samples with species codes UNDU, OTHR, OHDU 
 
+dabbling <- c("MALL", "WODU", "AMWI", "NOPI", "GADW","BWTE", "AGWT", "CITE", "NSHO",
+              "ABDU", "MBDH", "MODU", "MEDU", "EUWI")
+dabbling.df <- data.frame(species.code = dabbling, species.group = rep(1, each = length(dabbling)))
+dabbling.matrix <- as.matrix(dabbling.df)
 
+diving <- c("REDH", "HOME", "RNDU", "RUDU", "LESC", "GRSC", "COME", "CANV")
+diving.df <- data.frame(species.code = diving, species.group = rep(2, each = length(diving)))
+diving.matrix <- as.matrix(diving.df)
 
+sea.duck <- c("BUFF", "HARD", "COGO", "BAGO", "COEI", "SUSC", "WWSC", "BLSC", 'LTDU')
+sea.duck.df <- data.frame(species.code = sea.duck, species.group = rep(3, each = length(sea.duck)))
+sea.duck.matrix <- as.matrix(sea.duck.df)
 
+aserines <- c("HAGO", "CAGO", "LSGO", "ATBR", "CACG", "ROGO", "ACGO", "GSGO",
+              "MUSW", "TUSW", "TRUS")
+aserines.df <- data.frame(species.code = aserines, species.group = rep(4, each = length(aserines)))
+aserines.matrix <- as.matrix(aserines.df)
+
+shore <- c("AMOY", "RUTU", "SBDO", "REKN", "DOWI", "WESA", "PAGP", "BBPL", "DUNL", 
+           "WATA", "SAND", "SEPL", "CLRA", "SESA", "LESA", "PUSA", "KILL", "SOSA",
+           "SPSA", "HAST", "BTCU", "HAMO")
+shore.df <- data.frame(species.code = shore, species.group = rep(5, each = length(shore)))
+shore.matrix <- as.matrix(shore.df)
+
+sea.bird <- c("COTE", "ROST", "ARTE", "RBGU", "GBBG", "GWGU", "HERG", "WTSH", "LAAL", 
+              "DCCO", "HACO", "AMCO", "COLO", "AWPE")
+sea.bird.df <- data.frame(species.code = sea.bird, species.group = rep(6, each = length(sea.bird)))
+sea.bird.matrix <- as.matrix(sea.bird.df)
+
+land <- c('BAEA', 'RTHA', 'RSHA', 'SNOW', 'WITU', "COHA")
+land.df <- data.frame(species.code = land, species.group = rep(7, each = length(land)))
+land.matrix <- as.matrix(land.df)
+
+overall.matrix <- rbind(dabbling.matrix, diving.matrix, sea.duck.matrix, aserines.matrix, shore.matrix, 
+                 sea.bird.matrix, land.matrix)
+overall.df <- as.data.frame(overall.matrix)
+
+data <- inner_join(data, overall.df, by = c("species.code.full"="species.code"))
+
+setwd("~/Github")
+saveRDS(data, "AVHS_samplingevent_speciesgroup.rds")
