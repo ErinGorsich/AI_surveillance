@@ -1,4 +1,4 @@
-#cleans data and assigns sampling events
+#cleans data and assigns sampling events and species groups
 
 library(lubridate)
 library(stringr)
@@ -9,7 +9,7 @@ library(raster)
 ##################################################################################
 #data read in
 #################################################################################
-setwd("~/Honors Thesis/Project")
+setwd("~/HP/Data")
 data <- read.csv("FluA_FY07toFY16_Webb.csv")
 
 colnames(data) <- c("subjectID", "barcode", "band", "species.code.full", 
@@ -184,7 +184,8 @@ data <- data[!(data$collection.year %in% c("2011", "2014", "2016", "2017")), ]
 
 backup.year <- data
 
-setwd("~/Github")
+# setwd("~/Github")
+setwd("~/HP/Data")
 saveRDS(data, "AVHS_samplingevent.rds")
 
 ###################################################################################
@@ -219,7 +220,8 @@ temp$event.number.week <- seq(1, length(temp$prelim.number))
 test <- inner_join(test, temp, by = c("long"="location.x", "lat"="location.y", "week"="week", "collection.year"="year",
                                       'prelim.number'="prelim.number"))
 data <- test
-saveRDS(data, "~/Github/AVHS_sample.event.rds")
+setwd("~/HP/Data")
+saveRDS(data, "AVHS_samplingevent.rds")
 
 ###########################################################################################################################
 #Add Species Group
@@ -273,15 +275,16 @@ overall.df <- as.data.frame(overall.matrix)
 
 data <- inner_join(data, overall.df, by = c("species.code.full"="species.code"))
 
-setwd("~/Github")
+# setwd("~/Github")
+setwd("~/HP/Data")
 saveRDS(data, "AVHS_samplingevent_speciesgroup.rds")
 
 ######################################################################################################
 #add a column to tell which watershed
 ######################################################################################################
 
-setwd("~/Honors Thesis/Project/hydrologic_units")
-#setwd("~/HP/hydrologic_units)
+# setwd("~/Honors Thesis/Project/hydrologic_units")
+setwd("~/HP/hydrologic_units")
 huc4 <- shapefile("huc4.shp")
 projection(huc4) <- CRS("+proj=longlat +ellps=WGS84")
 
@@ -295,18 +298,19 @@ data$huc4 <- extract(huc4, pt)$HUC4
 ##########################################################################################################################
 
 #isolate unique sampling events including the month, year, and watershed of sampling
-events <- select(data, event.number.week, collection.month, collection.year)
-events <- events[unique(events$event.number.week), ]
+events <- dplyr::select(data, event.number.week, collection.month, collection.year, huc4)
+#line 303 is incorrect. output only has data from 2007 and 2008.
+test <- events[unique(events$event.number.week), ]
 
 #create a dataframe that includes the number of (positive) samples per species group per sampling event
 event <- data.frame(sample.event = rep(events$event.number.week, 7), month = rep(events$collection.month, 7),
-                    year = rep(events$collection.year, 7), watershed = NA, 
+                    year = rep(events$collection.year, 7), watershed = rep(events$huc4, 7), 
                     species.group = rep(seq(1, 7), each = length(events$event.number.week)), n = NA, y = NA)
 
 for (i in 1:length(event$sample.event)) {
   hold <- filter(data, event.number.week == event[i, 1])
   holdy <- filter(hold, species.group == event[i, 5])
-  holdz <- filter(holdyhAIpcr_susneg == "positive")
+  holdz <- filter(holdy, AIpcr_susneg == "positive")
   event[i, 6] <- length(holdy$subjectID)
   event[i, 7] <- length(holdz$subjectID)
 }
