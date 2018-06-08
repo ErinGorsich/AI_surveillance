@@ -283,8 +283,8 @@ saveRDS(data, "AVHS_samplingevent_speciesgroup.rds")
 #add a column to tell which watershed
 ######################################################################################################
 
-# setwd("~/Honors Thesis/Project/hydrologic_units")
-setwd("~/HP/hydrologic_units")
+setwd("~/Honors Thesis/Project/hydrologic_units")
+# setwd("~/HP/hydrologic_units")
 huc4 <- shapefile("huc4.shp")
 projection(huc4) <- CRS("+proj=longlat +ellps=WGS84")
 
@@ -299,8 +299,7 @@ data$huc4 <- extract(huc4, pt)$HUC4
 
 #isolate unique sampling events including the month, year, and watershed of sampling
 events <- dplyr::select(data, event.number.week, collection.month, collection.year, huc4)
-#line 303 is incorrect. output only has data from 2007 and 2008.
-test <- events[unique(events$event.number.week), ]
+events <- events[!duplicated(events[1:1]), ]
 
 #create a dataframe that includes the number of (positive) samples per species group per sampling event
 event <- data.frame(sample.event = rep(events$event.number.week, 7), month = rep(events$collection.month, 7),
