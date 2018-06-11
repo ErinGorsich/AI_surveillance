@@ -283,8 +283,8 @@ saveRDS(data, "AVHS_samplingevent_speciesgroup.rds")
 #add a column to tell which watershed
 ######################################################################################################
 
-setwd("~/Honors Thesis/Project/hydrologic_units")
-# setwd("~/HP/hydrologic_units")
+# setwd("~/Honors Thesis/Project/hydrologic_units")
+setwd("~/HP/hydrologic_units")
 huc4 <- shapefile("huc4.shp")
 projection(huc4) <- CRS("+proj=longlat +ellps=WGS84")
 
@@ -293,6 +293,7 @@ coordinates(pt) <- ~ long + lat
 proj4string(pt) <- CRS("+proj=longlat +ellps=WGS84")
 
 data$huc4 <- extract(huc4, pt)$HUC4
+data <- data[!(is.na(data$huc4)), ]
 ##########################################################################################################################
 #extract number of samples, number of positive samples for each sampling event and by species group/sampling event
 ##########################################################################################################################
