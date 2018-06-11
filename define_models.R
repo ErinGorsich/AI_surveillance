@@ -19,9 +19,9 @@ cat("model {
     #likelihood (i = month, j = year, k = huc, l = species, s = sampling events)
     for (l in 1:nspecies){
         for (s in 1:nsamplingevents) {
-            p[s, l] <- (Se[l] * lambda[s, l]) + ((1-Sp[l]) * (1-lamda[s, l]))
+            p[s, l] <- (Se[l] * lambda[s, l]) + ((1-Sp[l]) * (1-lambda[s, l]))
             y[s, l] ~ dbin(p[s, l], n[s, l])
-            lambda[s, l] ~ dbeta(alpha[month[s], year[s], huc[s, l], beta[month[s], year[s], huc[s], l]])
+            lambda[s, l] ~ dbeta(alpha[month[s], year[s], huc[s], l], beta[month[s], year[s], huc[s], l])
         }
     }
     
@@ -31,9 +31,11 @@ cat("model {
             for (j in l:nyears) {
                 for (k in 1:nhucs) {
                     pi[i, j, k, l] <- alpha[i, j, k, l] / (alpha[i, j, k, l] + beta[i, j, k, l])
-                    sdpi[i, j, k, l] <- 1/sqrt(alpha[i, j, k, l] + beta[i, j, k, l])
-                    pi[i, j, k, l] ~ dunif(0, 1)
-                    sdpi[i, j, k, l] ~ dt(0, 1, 1)T(0, )  # half cauchy
+                    alpha[i, j, k, l] ~ dunif(1, 5)
+                    beta[i, j, k, l] ~ dunif(1, 5)
+                    # sdpi[i, j, k, l] <- 1/sqrt(alpha[i, j, k, l] + beta[i, j, k, l])
+                    # pi[i, j, k, l] ~ dunif(0, 1)
+                    # sdpi[i, j, k, l] ~ dt(0, 1, 1)T(0, )  # half cauchy
                 }
             }
         }
@@ -47,6 +49,60 @@ cat("model {
     }", fill = TRUE)
 sink()
 
+# icar model - with sampling events
+
+
+sink("icar_sampling_events.txt")
+cat("model {
+    #likelihood (i = month, j = year, k = huc, l = species, s = sampling events)
+    for (l in 1:nspecies){
+      for (s in 1:nsamplingevents) {
+        p[s, l] <- (Se[l] * lambda[s, l]) + ((1-Sp[l]) * (1-lamda[s, l]))
+        y[s, l] ~ dbin(p[s, l], n[s, l])
+        lambda[s, l] ~ dbeta(alpha[month[s], year[s], huc[s], l], beta[month[s], year[s], huc[s], l])
+      }
+    }
+    
+    # Hierarchial step for lambda
+    for (l in 1:nspecies) {
+      for (i in 1:nmonths) {
+        for (j in l:nyears) {
+          for (k in 1:nhucs) {
+            pi[i, j, k, l] <- alpha[i, j, k, l] / (alpha[i, j, k, l] + beta[i, j, k, l])
+            sdpi[i, j, k, l] <- 1/sqrt(alpha[i, j, k, l] + beta[i, j, k, l])
+    
+            logit(pi[i, j, k, l]) <- lmupi[i, j, l] + epsilon[k]
+    
+            # hierarchial priors
+            sdpi[i, j, k, l] ~ dt(0, 1, 1)T(0, )  # half cauchy
+          }
+        }
+      }
+    }
+    
+    
+    # CAR Priors - Assumes spatial pattern is the same in all species...
+    for (k in 1:nhucs){
+      muepsilon[k] <- 0
+    }
+    Omega <- (tau * I) * (I - W)
+    epsilon[1:nhucs] ~ dmnorm(muepsilon[1:nhucs], Omega[1:nhucs, 1:nhucs])
+    tau ~ dgamma(0.1, 0.1)
+    
+    for (l in 1:nspecies) {
+      for (i in 1:nmonths){
+        for (j in 1:nyears){
+          lmupi[i, j, l] ~ dt(0, 0.4, 1)
+        }
+      }
+    }
+    # priors for Se/Sp
+    for (l in 1:nspecies) {
+      Se[l] ~ dbeta(20.833, 4.148)
+      Sp[l] ~ dbeta(8.403, 1.001)
+    }
+    }", fill = TRUE)
+sink()
 
 
 

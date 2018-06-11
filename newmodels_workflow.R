@@ -12,25 +12,56 @@ source("~/Github/AI_surveillance/define_models.r")
 
 #read in sampling data
 data <- readRDS('~/Github/samplingevent_n_y_speciesgroup.rds')
+data$month <- as.numeric(data$month)
+data$year <- as.numeric(as.character(data$year))
+
+#add a hucid column
+temp <- data.frame(watershed = (unique(data$watershed)))
+temp$hucid <- seq(1, length(temp[,1]))
+data$hucid <- temp$hucid[match(data$watershed, temp$watershed)]
+
+#add a yearid column
+temp <- data.frame(year = unique(data$year))
+temp$yearid <- seq(1, length(temp[,1]))
+data$yearid <- temp$yearid[match(data$year, temp$year)]
+
+#change month column to integers
+data$month <- as.integer(data$month)
 
 #define variables
-nsamplingevents <- length(unique(data$sample.event)) #13638
+nsamplingevents <- length(unique(data$sample.event)) #13589
 nspecies <- length(unique(data$species.group)) #7
-nmonths <- length(rep(seq(1, 12), times = 5)) #60
+nmonths <- length(seq(1, 12)) #12
 nyears <- length(unique(data$year)) #5
-nhucs <- length(unique(data$watershed)) #206
+nhucs <- length(unique(data$watershed)) #205
 
+y <- matrix(NA, nrow = nsamplingevents, ncol = nspecies)
+for (s in 1:nsamplingevents) {
+  for (l in 1:nspecies){
+    if(length( data$y[data$sample.event == s & data$species.group == l]) >0 ){
+    y[s, l] <- data$y[data$sample.event == s & data$species.group == l]}
+  }
+}
+
+n <- matrix(NA, nrow = nsamplingevents, ncol = nspecies)
+for (s in 1:nsamplingevents) {
+  for (l in 1:nspecies){
+    if(length(data$n[data$sample.event == s & data$species.group == l]) >0 ){
+      n[s, l] <- data$n[data$sample.event == s & data$species.group == l]}
+  }
+}
 #######################################################################################
 #base model
 #########################################################################################
 
 jags.data <- list(nsamplingevents = nsamplingevents, nspecies = nspecies, nmonths=nmonths,
-                  nyears=nyears, nhucs = nhucs)
+                  nyears=nyears, nhucs = nhucs, n = n, y=y, month = data$month[1:nsamplingevents],
+                  year = data$yearid[1:nsamplingevents], huc = data$hucid[1:nsamplingevents])
 #need initial values for lambda
-jags.inits <- function(){
-  list("Se" = runif(1, 0.6, 1), 'Sp' = runif(1, 0.6, 1), 
-       "pi" = array(runif(nsamplingevents*nmonths*nyears), dim = c(nmonths, nyears, nsites)))
-}
+# jags.inits <- function(){
+#   list("Se" = runif(1, 0.6, 1), 'Sp' = runif(1, 0.6, 1), 
+#        "pi" = array(runif(nsamplingevents*nmonths*nyears), dim = c(nmonths, nyears, nsites)))
+# }
 variable.names = c('Se', 'Sp', 'lambda', 'pi') #apparent prevalence?
 
 nadapt <- 1000
@@ -38,12 +69,9 @@ niter <- 10
 thin <- 1
 
 setwd("~/Github/AI_surveillance")
-base.mod <- jags.model(file = "base_sampling_events.txt", data=jags.data, inits=jags.inits,
+base.mod <- jags.model(file = "base_sampling_events.txt", data=jags.data,
                       n.chains=3, n.adapt=nadapt)
 saveRDS(base.mod, "modelruns/base_sampling_events_adapt.rds")
 base.mod.fit <- coda.samples(model=base.mod, variable.names=variable.names, n.iter=niter, 
                              thin=thin)
 saveRDS(base.mod.fit, "modelruns/base_sampling_event_fit.rds")
-
-
-#alpha line 17 -  needs iniital value/definition
