@@ -188,40 +188,6 @@ backup.year <- data
 setwd("~/HP/Data")
 saveRDS(data, "AVHS_samplingevent.rds")
 
-###################################################################################
-#Add Sampling Events
-###################################################################################
-#create a data frame to match all possible sampling locations to all possible weeks and years
-  #weeks defined by the epidemiological calendar
-
-# data <- readRDS("~/HP/Data/AVHS_samplingevent.rds")
-
-locations <- unique(cbind(data$long, data$lat))
-total.locations <- length(locations[,1])
-total.years <- length(unique(data$collection.year))
-total.weeks <- 53 * total.years
-location.x <- rep(locations[ ,1], total.weeks)
-location.y <- rep(locations[, 2], total.weeks)
-week <- rep(seq(1, 53, 1), each = total.locations, times = total.years)
-year <- rep(c("2007", "2008", "2009", "2010", "2015"), each = total.locations*53)
-assign.event <- data.frame(location.x = location.x, location.y=location.y, week = week,
-                           year=year)
-assign.event$prelim.number <- seq(1, length(location.x), 1)
-backup.event <- assign.event
-
-#find location, month, year combinations with data and assign a sample event number to each
-data$collection.date <- mdy(data$collection.date.char)
-data$week <- epiweek(data$collection.date)
-data$collection.year <- as.factor(data$collection.year)
-test <- inner_join(data, assign.event, by = c("long"="location.x", "lat"="location.y", "week"="week", "collection.year"="year"))
-unique <- unique(test$prelim.number)
-temp <- filter(assign.event, prelim.number %in% unique)
-temp$event.number.week <- seq(1, length(temp$prelim.number))
-test <- inner_join(test, temp, by = c("long"="location.x", "lat"="location.y", "week"="week", "collection.year"="year",
-                                      'prelim.number'="prelim.number"))
-data <- test
-setwd("~/HP/Data")
-saveRDS(data, "AVHS_samplingevent.rds")
 
 ###########################################################################################################################
 #Add Species Group
@@ -291,9 +257,47 @@ projection(huc4) <- CRS("+proj=longlat +ellps=WGS84")
 pt <- data[, c("lat", "long")]
 coordinates(pt) <- ~ long + lat
 proj4string(pt) <- CRS("+proj=longlat +ellps=WGS84")
+sel <- !(huc4$STATES %in% c("AK", "AS", "AK,CN", "HI", "PR", "GU", "MP", "VI"))
+huc4 <- huc4[sel, ]
 
 data$huc4 <- extract(huc4, pt)$HUC4
 data <- data[!(is.na(data$huc4)), ]
+
+###################################################################################
+#Add Sampling Events
+###################################################################################
+#create a data frame to match all possible sampling locations to all possible weeks and years
+#weeks defined by the epidemiological calendar
+
+# data <- readRDS("~/HP/Data/AVHS_samplingevent.rds")
+
+locations <- unique(cbind(data$long, data$lat))
+total.locations <- length(locations[,1])
+total.years <- length(unique(data$collection.year))
+total.weeks <- 53 * total.years
+location.x <- rep(locations[ ,1], total.weeks)
+location.y <- rep(locations[, 2], total.weeks)
+week <- rep(seq(1, 53, 1), each = total.locations, times = total.years)
+year <- rep(c("2007", "2008", "2009", "2010", "2015"), each = total.locations*53)
+assign.event <- data.frame(location.x = location.x, location.y=location.y, week = week,
+                           year=year)
+assign.event$prelim.number <- seq(1, length(location.x), 1)
+backup.event <- assign.event
+
+#find location, month, year combinations with data and assign a sample event number to each
+data$collection.date <- mdy(data$collection.date.char)
+data$week <- epiweek(data$collection.date)
+data$collection.year <- as.factor(data$collection.year)
+test <- inner_join(data, assign.event, by = c("long"="location.x", "lat"="location.y", "week"="week", "collection.year"="year"))
+unique <- unique(test$prelim.number)
+temp <- filter(assign.event, prelim.number %in% unique)
+temp$event.number.week <- seq(1, length(temp$prelim.number))
+test <- inner_join(test, temp, by = c("long"="location.x", "lat"="location.y", "week"="week", "collection.year"="year",
+                                      'prelim.number'="prelim.number"))
+data <- test
+setwd("~/HP/Data")
+saveRDS(data, "AVHS_samplingevent.rds")
+
 ##########################################################################################################################
 #extract number of samples, number of positive samples for each sampling event and by species group/sampling event
 ##########################################################################################################################
