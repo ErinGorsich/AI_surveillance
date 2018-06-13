@@ -51,7 +51,7 @@ sink()
 
 # icar model - with sampling events
 
-
+setwd("~/Github/AI_surveillance")
 sink("icar_sampling_events.txt")
 cat("model {
     #likelihood (i = month, j = year, k = huc, l = species, s = sampling events)
