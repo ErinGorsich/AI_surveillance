@@ -57,7 +57,7 @@ cat("model {
     #likelihood (i = month, j = year, k = huc, l = species, s = sampling events)
     for (l in 1:nspecies){
       for (s in 1:nsamplingevents) {
-        p[s, l] <- (Se[l] * lambda[s, l]) + ((1-Sp[l]) * (1-lamda[s, l]))
+        p[s, l] <- (Se[l] * lambda[s, l]) + ((1-Sp[l]) * (1-lambda[s, l]))
         y[s, l] ~ dbin(p[s, l], n[s, l])
         lambda[s, l] ~ dbeta(alpha[month[s], year[s], huc[s], l], beta[month[s], year[s], huc[s], l])
       }
@@ -69,12 +69,14 @@ cat("model {
         for (j in l:nyears) {
           for (k in 1:nhucs) {
             pi[i, j, k, l] <- alpha[i, j, k, l] / (alpha[i, j, k, l] + beta[i, j, k, l])
-            sdpi[i, j, k, l] <- 1/sqrt(alpha[i, j, k, l] + beta[i, j, k, l])
+            alpha[i, j, k, l] ~ dunif(1, 5)
+            beta[i, j, k, l] ~ dunif(1, 5)
+            # sdpi[i, j, k, l] <- 1/sqrt(alpha[i, j, k, l] + beta[i, j, k, l])
     
             logit(pi[i, j, k, l]) <- lmupi[i, j, l] + epsilon[k]
     
             # hierarchial priors
-            sdpi[i, j, k, l] ~ dt(0, 1, 1)T(0, )  # half cauchy
+            # sdpi[i, j, k, l] ~ dt(0, 1, 1)T(0, )  # half cauchy
           }
         }
       }
