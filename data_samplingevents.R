@@ -1,13 +1,15 @@
-#cleans data and assigns sampling events
+#cleans data and assigns sampling events and species groups
 
 library(lubridate)
 library(stringr)
 library(dplyr)
+library(rgdal)
+library(raster)
 
 ##################################################################################
 #data read in
 #################################################################################
-setwd("~/Honors Thesis/Project")
+setwd("~/HP/Data")
 data <- read.csv("FluA_FY07toFY16_Webb.csv")
 
 colnames(data) <- c("subjectID", "barcode", "band", "species.code.full", 
@@ -182,42 +184,10 @@ data <- data[!(data$collection.year %in% c("2011", "2014", "2016", "2017")), ]
 
 backup.year <- data
 
-setwd("~/Github")
+# setwd("~/Github")
+setwd("~/HP/Data")
 saveRDS(data, "AVHS_samplingevent.rds")
 
-###################################################################################
-#Add Sampling Events
-###################################################################################
-#create a data frame to match all possible sampling locations to all possible weeks and years
-  #weeks defined by the epidemiological calendar
-
-# data <- readRDS("~/HP/Data/AVHS_samplingevent.rds")
-
-locations <- unique(cbind(data$long, data$lat))
-total.locations <- length(locations[,1])
-total.years <- length(unique(data$collection.year))
-total.weeks <- 53 * total.years
-location.x <- rep(locations[ ,1], total.weeks)
-location.y <- rep(locations[, 2], total.weeks)
-week <- rep(seq(1, 53, 1), each = total.locations, times = total.years)
-year <- rep(c("2007", "2008", "2009", "2010", "2015"), each = total.locations*53)
-assign.event <- data.frame(location.x = location.x, location.y=location.y, week = week,
-                           year=year)
-assign.event$prelim.number <- seq(1, length(location.x), 1)
-backup.event <- assign.event
-
-#find location, month, year combinations with data and assign a sample event number to each
-data$collection.date <- mdy(data$collection.date.char)
-data$week <- epiweek(data$collection.date)
-data$collection.year <- as.factor(data$collection.year)
-test <- inner_join(data, assign.event, by = c("long"="location.x", "lat"="location.y", "week"="week", "collection.year"="year"))
-unique <- unique(test$prelim.number)
-temp <- filter(assign.event, prelim.number %in% unique)
-temp$event.number.week <- seq(1, length(temp$prelim.number))
-test <- inner_join(test, temp, by = c("long"="location.x", "lat"="location.y", "week"="week", "collection.year"="year",
-                                      'prelim.number'="prelim.number"))
-data <- test
-saveRDS(data, "~/Github/AVHS_sample.event.rds")
 
 ###########################################################################################################################
 #Add Species Group
@@ -271,5 +241,84 @@ overall.df <- as.data.frame(overall.matrix)
 
 data <- inner_join(data, overall.df, by = c("species.code.full"="species.code"))
 
-setwd("~/Github")
+# setwd("~/Github")
+setwd("~/HP/Data")
 saveRDS(data, "AVHS_samplingevent_speciesgroup.rds")
+
+######################################################################################################
+#add a column to tell which watershed
+######################################################################################################
+
+# setwd("~/Honors Thesis/Project/hydrologic_units")
+setwd("~/HP/hydrologic_units")
+huc4 <- shapefile("huc4.shp")
+projection(huc4) <- CRS("+proj=longlat +ellps=WGS84")
+
+pt <- data[, c("lat", "long")]
+coordinates(pt) <- ~ long + lat
+proj4string(pt) <- CRS("+proj=longlat +ellps=WGS84")
+sel <- !(huc4$STATES %in% c("AK", "AS", "AK,CN", "HI", "PR", "GU", "MP", "VI"))
+huc4 <- huc4[sel, ]
+
+data$huc4 <- extract(huc4, pt)$HUC4
+data <- data[!(is.na(data$huc4)), ]
+
+###################################################################################
+#Add Sampling Events
+###################################################################################
+#create a data frame to match all possible sampling locations to all possible weeks and years
+#weeks defined by the epidemiological calendar
+
+# data <- readRDS("~/HP/Data/AVHS_samplingevent.rds")
+
+locations <- unique(cbind(data$long, data$lat))
+total.locations <- length(locations[,1])
+total.years <- length(unique(data$collection.year))
+total.weeks <- 53 * total.years
+location.x <- rep(locations[ ,1], total.weeks)
+location.y <- rep(locations[, 2], total.weeks)
+week <- rep(seq(1, 53, 1), each = total.locations, times = total.years)
+year <- rep(c("2007", "2008", "2009", "2010", "2015"), each = total.locations*53)
+assign.event <- data.frame(location.x = location.x, location.y=location.y, week = week,
+                           year=year)
+assign.event$prelim.number <- seq(1, length(location.x), 1)
+backup.event <- assign.event
+
+#find location, month, year combinations with data and assign a sample event number to each
+data$collection.date <- mdy(data$collection.date.char)
+data$week <- epiweek(data$collection.date)
+data$collection.year <- as.factor(data$collection.year)
+test <- inner_join(data, assign.event, by = c("long"="location.x", "lat"="location.y", "week"="week", "collection.year"="year"))
+unique <- unique(test$prelim.number)
+temp <- filter(assign.event, prelim.number %in% unique)
+temp$event.number.week <- seq(1, length(temp$prelim.number))
+test <- inner_join(test, temp, by = c("long"="location.x", "lat"="location.y", "week"="week", "collection.year"="year",
+                                      'prelim.number'="prelim.number"))
+data <- test
+setwd("~/HP/Data")
+saveRDS(data, "AVHS_samplingevent.rds")
+
+##########################################################################################################################
+#extract number of samples, number of positive samples for each sampling event and by species group/sampling event
+##########################################################################################################################
+
+#isolate unique sampling events including the month, year, and watershed of sampling
+events <- dplyr::select(data, event.number.week, collection.month, collection.year, huc4)
+events <- events[!duplicated(events[1:1]), ]
+
+#create a dataframe that includes the number of (positive) samples per species group per sampling event
+event <- data.frame(sample.event = rep(events$event.number.week, 7), month = rep(events$collection.month, 7),
+                    year = rep(events$collection.year, 7), watershed = rep(events$huc4, 7), 
+                    species.group = rep(seq(1, 7), each = length(events$event.number.week)), n = NA, y = NA)
+
+for (i in 1:length(event$sample.event)) {
+  hold <- filter(data, event.number.week == event[i, 1])
+  holdy <- filter(hold, species.group == event[i, 5])
+  holdz <- filter(holdy, AIpcr_susneg == "positive")
+  event[i, 6] <- length(holdy$subjectID)
+  event[i, 7] <- length(holdz$subjectID)
+}
+
+setwd("~/Github")
+saveRDS(event, "samplingevent_n_y_speciesgroup.rds")
+
