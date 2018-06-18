@@ -13,7 +13,33 @@
 
 # See notes on priors in Chapter 5 of Gelman et al. BDA, and 
 # http://andrewgelman.com/2009/10/21/some_practical/
-setwd("~/Github/AI_surveillance")
+sink("base_sampling_test.txt")
+cat("model {
+    #likelihood (i = month, j = year, k = huc, l = species, s = sampling events)
+    for (s in 1:nsamplingevents) {
+        p[s] <- (Se * lambda[s]) + ((1-Sp) * (1-lambda[s]))
+        y[s] ~ dbin(p[s], n[s])
+        lambda[s] ~ dbeta(alpha[month[s], year[s], huc[s]], beta[month[s], year[s], huc[s]]) T(0.001,0.999)
+    }
+    
+    # Hierarchial step for lambda 
+    for (i in 1:nmonths) {
+        for (j in 1:nyears) {
+            for (k in 1:nhucs) {
+                alpha[i, j, k] <- pi[i, j, k] * scale[i, j, k]
+                beta[i, j, k] <- (1 - pi[i, j, k]) * scale[i, j, k]
+                pi[i, j, k] ~ dbeta(1, 1)
+                scale[i, j, k] ~ dpar(1.5, 1)
+            }
+        }
+    }
+    
+    #priors for Se/Sp
+    Se ~ dbeta(20.833, 4.148)
+    Sp ~ dbeta(8.403, 1.001)
+    }", fill = TRUE)
+sink()
+
 sink("base_sampling_events.txt")
 cat("model {
     #likelihood (i = month, j = year, k = huc, l = species, s = sampling events)
@@ -21,21 +47,19 @@ cat("model {
         for (s in 1:nsamplingevents) {
             p[s, l] <- (Se[l] * lambda[s, l]) + ((1-Sp[l]) * (1-lambda[s, l]))
             y[s, l] ~ dbin(p[s, l], n[s, l])
-            lambda[s, l] ~ dbeta(alpha[month[s], year[s], huc[s], l], beta[month[s], year[s], huc[s], l])
+            lambda[s, l] ~ dbeta(alpha[month[s], year[s], huc[s], l], beta[month[s], year[s], huc[s], l])T(0.001,0.999)
         }
     }
     
     # Hierarchial step for lambda 
     for (l in 1:nspecies) {
         for (i in 1:nmonths) {
-            for (j in l:nyears) {
+            for (j in 1:nyears) {
                 for (k in 1:nhucs) {
-                    pi[i, j, k, l] <- alpha[i, j, k, l] / (alpha[i, j, k, l] + beta[i, j, k, l])
-                    alpha[i, j, k, l] ~ dunif(1, 5)
-                    beta[i, j, k, l] ~ dunif(1, 5)
-                    # sdpi[i, j, k, l] <- 1/sqrt(alpha[i, j, k, l] + beta[i, j, k, l])
-                    # pi[i, j, k, l] ~ dunif(0, 1)
-                    # sdpi[i, j, k, l] ~ dt(0, 1, 1)T(0, )  # half cauchy
+                    alpha[i, j, k, l] <- pi[i, j, k, l] * scale[i, j, k, l]
+                    beta[i, j, k, l] <- (1 - pi[i, j, k, l]) * scale[i, j, k, l]
+                    pi[i, j, k, l] ~ dbeta(1, 1)
+                    scale[i, j, k, l] ~ dpar(1.5, 1)
                 }
             }
         }
@@ -51,7 +75,7 @@ sink()
 
 # icar model - with sampling events
 
-setwd("~/Github/AI_surveillance")
+#setwd("~/Github/AI_surveillance")
 sink("icar_sampling_events.txt")
 cat("model {
     #likelihood (i = month, j = year, k = huc, l = species, s = sampling events)
@@ -59,14 +83,14 @@ cat("model {
       for (s in 1:nsamplingevents) {
         p[s, l] <- (Se[l] * lambda[s, l]) + ((1-Sp[l]) * (1-lambda[s, l]))
         y[s, l] ~ dbin(p[s, l], n[s, l])
-        lambda[s, l] ~ dbeta(alpha[month[s], year[s], huc[s], l], beta[month[s], year[s], huc[s], l])
+        lambda[s, l] ~ dbeta(alpha[month[s], year[s], huc[s], l], beta[month[s], year[s], huc[s], l])T(0.001,0.999)
       }
     }
     
     # Hierarchial step for lambda
     for (l in 1:nspecies) {
       for (i in 1:nmonths) {
-        for (j in l:nyears) {
+        for (j in 1:nyears) {
           for (k in 1:nhucs) {
             pi[i, j, k, l] <- alpha[i, j, k, l] / (alpha[i, j, k, l] + beta[i, j, k, l])
             alpha[i, j, k, l] ~ dunif(1, 5)

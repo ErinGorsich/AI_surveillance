@@ -6,13 +6,20 @@
 library(rjags)
 library(coda)
 
+Erin <- FALSE
+
 #load models
-setwd("~/Github/AI_surveillance")
-source("~/Github/AI_surveillance/define_models.r")
-source("~/Github/AI_surveillance/define_neighborhood.r")
+if (Erin){
+    setwd("~/Github/AI_surveillance")
+    data <- readRDS('samplingevent_n_y_speciesgroup.rds')
+} else {
+    setwd("~/Github/AI_surveillance")
+    data <- readRDS('~/Github/samplingevent_n_y_speciesgroup.rds')
+}
+source("define_models.r")
+source("define_neighborhood.r")
 
 #read in sampling data
-data <- readRDS('~/Github/samplingevent_n_y_speciesgroup.rds')
 data$month <- as.numeric(data$month)
 data$year <- as.numeric(as.character(data$year))
 
@@ -51,13 +58,28 @@ for (s in 1:nsamplingevents) {
       n[s, l] <- data$n[data$sample.event == s & data$species.group == l]}
   }
 }
+
 #######################################################################################
 #base model
 #########################################################################################
+nadapt <- 50
+niter <- 10
+thin <- 1
 
-jags.data <- list(nsamplingevents = nsamplingevents, nspecies = nspecies, nmonths=nmonths,
-                  nyears=nyears, nhucs = nhucs, n = n, y=y, month = data$month[1:nsamplingevents],
-                  year = data$yearid[1:nsamplingevents], huc = data$hucid[1:nsamplingevents])
+# test run no species
+jags.data <- list(nsamplingevents = nsamplingevents,
+    nmonths = nmonths, nyears = nyears, nhucs = nhucs, n = n[ ,1], y = y[ ,1], 
+    month = data$month[1:nsamplingevents],
+    year = data$yearid[1:nsamplingevents], 
+    huc = data$hucid[1:nsamplingevents])
+base.mod <- jags.model(file = "base_sampling_test.txt", data=jags.data,
+    n.chains=3, n.adapt=nadapt)
+
+# model with species and sampling events
+jags.data <- list(nsamplingevents = nsamplingevents, nspecies = nspecies, 
+    nmonths = nmonths, nyears = nyears, nhucs = nhucs, n = n, y = y, 
+    month = data$month[1:nsamplingevents],
+    year = data$yearid[1:nsamplingevents], huc = data$hucid[1:nsamplingevents])
 #need initial values for lambda
 # jags.inits <- function(){
 #   list("Se" = runif(1, 0.6, 1), 'Sp' = runif(1, 0.6, 1), 
@@ -65,13 +87,11 @@ jags.data <- list(nsamplingevents = nsamplingevents, nspecies = nspecies, nmonth
 # }
 variable.names = c('Se', 'Sp', 'lambda', 'pi') #apparent prevalence?
 
-nadapt <- 1000
-niter <- 10
-thin <- 1
 
-setwd("~/Github/AI_surveillance")
+
+#setwd("~/Github/AI_surveillance")
 base.mod <- jags.model(file = "base_sampling_events.txt", data=jags.data,
-                      n.chains=3, n.adapt=nadapt)
+    n.chains=3, n.adapt=nadapt)
 saveRDS(base.mod, "modelruns/base_sampling_events_adapt.rds")
 base.mod.fit <- coda.samples(model=base.mod, variable.names=variable.names, n.iter=niter, 
                              thin=thin)

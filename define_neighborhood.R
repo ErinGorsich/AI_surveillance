@@ -7,9 +7,16 @@ library(raster)
 library(geosphere)
 
 # need hucs in global environment; needs network in global environment
-# setwd("~/HP/hydrologic_units")
-setwd("~/Honors Thesis/Project/hydrologic_units")
-huc4 <- shapefile("huc4.shp")
+if (Erin){
+    hucdir <- "~/Documents/Avian_Influenza/Data/hydrologic_units/"
+} else {
+    hucdir <- "~/Honors Thesis/Project/hydrologic_units/"
+}
+huc4 <- shapefile(paste(hucdir, "huc4.shp", sep = ""))
+
+# HP - delete me - if read in works ok                  
+# setwd("~/Honors Thesis/Project/hydrologic_units")
+# huc4 <- shapefile("huc4.shp")
 projection(huc4) <- CRS("+proj=longlat +ellps=WGS84")
 sel <- !(huc4$STATES %in% c("AK", "AS", "AK,CN", "HI", "PR", "GU", "MP", "VI"))
 huc4 <- huc4[sel, ]
@@ -24,7 +31,9 @@ names <- huc4@data$HUC4
 
 # update based on bird movement data
 # setwd("~/HP/Data")
+if (!Erin){
 setwd("~/Github")
+}
 t <- readRDS("birdmovementnets.rds")
 
 # function to define shape of autocorrelation in space
