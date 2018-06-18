@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 ####################################################################################
 #workflow for updated models
 ###################################################################################
@@ -68,13 +67,13 @@ niter <- 10
 thin <- 1
 
 # test run no species
-jags.data <- list(nsamplingevents = nsamplingevents,
-    nmonths = nmonths, nyears = nyears, nhucs = nhucs, n = n[ ,1], y = y[ ,1], 
-    month = data$month[1:nsamplingevents],
-    year = data$yearid[1:nsamplingevents], 
-    huc = data$hucid[1:nsamplingevents])
-base.mod <- jags.model(file = "base_sampling_test.txt", data=jags.data,
-    n.chains=3, n.adapt=nadapt)
+# jags.data <- list(nsamplingevents = nsamplingevents,
+#     nmonths = nmonths, nyears = nyears, nhucs = nhucs, n = n[ ,1], y = y[ ,1], 
+#     month = data$month[1:nsamplingevents],
+#     year = data$yearid[1:nsamplingevents], 
+#     huc = data$hucid[1:nsamplingevents])
+# base.mod <- jags.model(file = "base_sampling_test.txt", data=jags.data,
+#     n.chains=3, n.adapt=nadapt)
 
 # model with species and sampling events
 jags.data <- list(nsamplingevents = nsamplingevents, nspecies = nspecies, 
@@ -94,13 +93,35 @@ variable.names = c('Se', 'Sp', 'lambda', 'pi') #apparent prevalence?
 base.mod <- jags.model(file = "base_sampling_events.txt", data=jags.data,
     n.chains=3, n.adapt=nadapt)
 saveRDS(base.mod, "modelruns/base_sampling_events_adapt.rds")
+update(base.mod, nadapt)
 base.mod.fit <- coda.samples(model=base.mod, variable.names=variable.names, n.iter=niter, 
                              thin=thin)
 saveRDS(base.mod.fit, "modelruns/base_sampling_event_fit.rds")
 
+#plots
+setwd("~/HP/Plots")
+pdf("base_trace_density_sensitivity_specificity.pdf")
+plot(base.mod.fit[,1:2])
+dev.off()
+
+pdf("base_trace_density_sensitivity_specificity.pdf")
+plot(base.mod.fit[,1:2])
+dev.off()
+
+pdf("base_sensitivity_autocorrelation.pdf")
+autocorr.plot(base.mod.fit[,'Se'], main="Sensitivity Autocorrelation")
+dev.off()
+
+pdf("base_specificity_autocorrelation.pdf")
+autocorr.plot(base.mod.fit[, 'Sp'], main="Specificity Autocorrelation")
+dev.off()
+
+rm(base.mod, base.mod.fit)
+
 ###################################################################################################
-#spatial model
+#spatial model - queens
 ###################################################################################################
+
 W <- define.neighborhood(method="queens")
 B <- scaleW(W)
 D <- diag(rowSums(W))
@@ -121,13 +142,181 @@ niter <- 10
 thin <- 1
 
 setwd("~/Github/AI_surveillance")
-spatial.mod <- jags.model(file = "icar_sampling_events.txt", data=jags.data, n.chains = 3,
+queens.mod <- jags.model(file = "icar_sampling_events.txt", data=jags.data, n.chains = 3,
                           n.adapt=nadapt)
-saveRDS(spatial.mod, "modelruns/icar_sampling_events_adapt.txt")
-spatial.mod.fit <- coda.samples(model=spatial.mod, variable.names=variable.names, n.iter=niter,
+saveRDS(queens.mod, "modelruns/icar_sampling_events_queens_adapt.rds")
+update(queens.mod, nadapt)
+queens.mod.fit <- coda.samples(model=queens.mod, variable.names=variable.names, n.iter=niter,
                                 thin=thin)
-saveRDS(spatial.mod.fit, "modelruns/icar_sample_events_fit.txt")
-=======
+saveRDS(queens.mod.fit, "modelruns/icar_sample_events_queens_fit.rds")
+
+#plots
+setwd("~/HP/Plots")
+pdf("iCAR_queens_trace_density_sensitivity_specificity.pdf")
+plot(queens.mod.fit[,1:2])
+dev.off()
+
+pdf("iCAR_queens_trace_density_sensitivity_specificity.pdf")
+plot(queens.mod.fit[,1:2])
+dev.off()
+
+pdf("iCAR_queens_sensitivity_autocorrelation.pdf")
+autocorr.plot(queens.mod.fit[,'Se'], main="Sensitivity Autocorrelation")
+dev.off()
+
+pdf("iCAR_queens_specificity_autocorrelation.pdf")
+autocorr.plot(queens.mod.fit[, 'Sp'], main="Specificity Autocorrelation")
+dev.off()
+
+###################################################################################################
+#spatial model - weighted queens
+###################################################################################################
+
+W <- define.neighborhood(method="weightedqueens")
+B <- scaleW(W)
+D <- diag(rowSums(W))
+I <- diag(1, nrow = dim(W)[1], ncol = dim(W)[1])
+
+jags.data <- list(nsamplingevents = nsamplingevents, nspecies = nspecies, nmonths=nmonths,
+                  nyears=nyears, nhucs = nhucs, n = n, y=y, month = data$month[1:nsamplingevents],
+                  year = data$yearid[1:nsamplingevents], huc = data$hucid[1:nsamplingevents], W=W, I=I)
+#need initial values for lambda
+# jags.inits <- function(){
+#   list("Se" = runif(1, 0.6, 1), 'Sp' = runif(1, 0.6, 1), 
+#        "pi" = array(runif(nsamplingevents*nmonths*nyears), dim = c(nmonths, nyears, nsites)))
+# }
+variable.names = c('Se', 'Sp', 'lambda', 'pi') #apparent prevalence?
+
+nadapt <- 1000
+niter <- 10
+thin <- 1
+
+setwd("~/Github/AI_surveillance")
+wtqueens.mod <- jags.model(file = "icar_sampling_events.txt", data=jags.data, n.chains = 3,
+                         n.adapt=nadapt)
+saveRDS(wtqueens.mod, "modelruns/icar_sampling_events_wtqueens_adapt.rds")
+update(wtqueens.mod, nadapt)
+wtqueens.mod.fit <- coda.samples(model=wtqueens.mod, variable.names=variable.names, n.iter=niter,
+                               thin=thin)
+saveRDS(wtqueens.mod.fit, "modelruns/icar_sample_events_wtqueens_fit.rds")
+
+#plots
+setwd("~/HP/Plots")
+pdf("iCAR_wtqueens_trace_density_sensitivity_specificity.pdf")
+plot(wtqueens.mod.fit[,1:2])
+dev.off()
+
+pdf("iCAR_wtqueens_trace_density_sensitivity_specificity.pdf")
+plot(wtqueens.mod.fit[,1:2])
+dev.off()
+
+pdf("iCAR_wtqueens_sensitivity_autocorrelation.pdf")
+autocorr.plot(wtqueens.mod.fit[,'Se'], main="Sensitivity Autocorrelation")
+dev.off()
+
+pdf("iCAR_wtqueens_specificity_autocorrelation.pdf")
+autocorr.plot(wtqueens.mod.fit[, 'Sp'], main="Specificity Autocorrelation")
+dev.off()
+
+###################################################################################################
+#spatial model - network
+###################################################################################################
+
+W <- define.neighborhood(method="network")
+B <- scaleW(W)
+D <- diag(rowSums(W))
+I <- diag(1, nrow = dim(W)[1], ncol = dim(W)[1])
+
+jags.data <- list(nsamplingevents = nsamplingevents, nspecies = nspecies, nmonths=nmonths,
+                  nyears=nyears, nhucs = nhucs, n = n, y=y, month = data$month[1:nsamplingevents],
+                  year = data$yearid[1:nsamplingevents], huc = data$hucid[1:nsamplingevents], W=W, I=I)
+#need initial values for lambda
+# jags.inits <- function(){
+#   list("Se" = runif(1, 0.6, 1), 'Sp' = runif(1, 0.6, 1), 
+#        "pi" = array(runif(nsamplingevents*nmonths*nyears), dim = c(nmonths, nyears, nsites)))
+# }
+variable.names = c('Se', 'Sp', 'lambda', 'pi') #apparent prevalence?
+
+nadapt <- 1000
+niter <- 10
+thin <- 1
+
+setwd("~/Github/AI_surveillance")
+network.mod <- jags.model(file = "icar_sampling_events.txt", data=jags.data, n.chains = 3,
+                         n.adapt=nadapt)
+saveRDS(network.mod, "modelruns/icar_sampling_events_network_adapt.rds")
+update(network.mod, nadapt)
+network.mod.fit <- coda.samples(model=network.mod, variable.names=variable.names, n.iter=niter,
+                               thin=thin)
+saveRDS(network.mod.fit, "modelruns/icar_sample_events_network_fit.rds")
+
+#plots
+setwd("~/HP/Plots")
+pdf("iCAR_network_trace_density_sensitivity_specificity.pdf")
+plot(network.mod.fit[,1:2])
+dev.off()
+
+pdf("iCAR_network_trace_density_sensitivity_specificity.pdf")
+plot(network.mod.fit[,1:2])
+dev.off()
+
+pdf("iCAR_network_sensitivity_autocorrelation.pdf")
+autocorr.plot(network.mod.fit[,'Se'], main="Sensitivity Autocorrelation")
+dev.off()
+
+pdf("iCAR_network_specificity_autocorrelation.pdf")
+autocorr.plot(network.mod.fit[, 'Sp'], main="Specificity Autocorrelation")
+dev.off()
+
+###################################################################################################
+#spatial model - weighted network
+###################################################################################################
+
+W <- define.neighborhood(method="weightednetwork")
+B <- scaleW(W)
+D <- diag(rowSums(W))
+I <- diag(1, nrow = dim(W)[1], ncol = dim(W)[1])
+
+jags.data <- list(nsamplingevents = nsamplingevents, nspecies = nspecies, nmonths=nmonths,
+                  nyears=nyears, nhucs = nhucs, n = n, y=y, month = data$month[1:nsamplingevents],
+                  year = data$yearid[1:nsamplingevents], huc = data$hucid[1:nsamplingevents], W=W, I=I)
+#need initial values for lambda
+# jags.inits <- function(){
+#   list("Se" = runif(1, 0.6, 1), 'Sp' = runif(1, 0.6, 1), 
+#        "pi" = array(runif(nsamplingevents*nmonths*nyears), dim = c(nmonths, nyears, nsites)))
+# }
+variable.names = c('Se', 'Sp', 'lambda', 'pi') #apparent prevalence?
+
+nadapt <- 1000
+niter <- 10
+thin <- 1
+
+setwd("~/Github/AI_surveillance")
+wtnetwork.mod <- jags.model(file = "icar_sampling_events.txt", data=jags.data, n.chains = 3,
+                         n.adapt=nadapt)
+saveRDS(wtnetwork.mod, "modelruns/icar_sampling_events_wtnetwork_adapt.rds")
+update(wtnetwork.mod, nadapt)
+wtnetwork.mod.fit <- coda.samples(model=wtnetwork.mod, variable.names=variable.names, n.iter=niter,
+                               thin=thin)
+saveRDS(wtnetwork.mod.fit, "modelruns/icar_sample_events_wtnetwork_fit.rds")
+
+#plots
+setwd("~/HP/Plots")
+pdf("iCAR_wtnetwork_trace_density_sensitivity_specificity.pdf")
+plot(wtnetwork.mod.fit[,1:2])
+dev.off()
+
+pdf("iCAR_wtnetwork_trace_density_sensitivity_specificity.pdf")
+plot(wtnetwork.mod.fit[,1:2])
+dev.off()
+
+pdf("iCAR_wtnetwork_sensitivity_autocorrelation.pdf")
+autocorr.plot(wtnetwork.mod.fit[,'Se'], main="Sensitivity Autocorrelation")
+dev.off()
+
+pdf("iCAR_wtnetwork_specificity_autocorrelation.pdf")
+autocorr.plot(wtnetwork.mod.fit[, 'Sp'], main="Specificity Autocorrelation")
+dev.off()
 ####################################################################################
 #workflow for updated models
 ###################################################################################
@@ -187,8 +376,8 @@ for (s in 1:nsamplingevents) {
 
 jags.data <- list(nsamplingevents = nsamplingevents, nspecies = nspecies, nmonths=nmonths,
                   nyears=nyears, nhucs = nhucs, n = n, y=y, month = data$month[1:nsamplingevents],
-                  year = data$yearid[1:nsamplingevents], huc = data$hucid[1:nsamplingevents], 
-                  species = unique(data$species.group))
+                  year = data$yearid[1:nsamplingevents], huc = data$hucid[1:nsamplingevents])
+
 #need initial values for lambda
 # jags.inits <- function(){
 #   list("Se" = runif(1, 0.6, 1), 'Sp' = runif(1, 0.6, 1), 
