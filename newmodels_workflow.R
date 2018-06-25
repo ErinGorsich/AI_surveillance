@@ -317,6 +317,56 @@ dev.off()
 pdf("iCAR_wtnetwork_specificity_autocorrelation.pdf")
 autocorr.plot(wtnetwork.mod.fit[, 'Sp'], main="Specificity Autocorrelation")
 dev.off()
+
+rm(wtnetwork.mod, wtnetwork.mod.fit)
+##########################################################################################
+#AR1 Model - Temporal Correlation
+#########################################################################################
+jags.data <- list(nsamplingevents = nsamplingevents, nspecies = nspecies, nmonths=nmonths,
+                  nyears=nyears, nhucs = nhucs, n = n, y=y, month = data$month[1:nsamplingevents],
+                  year = data$yearid[1:nsamplingevents], huc = data$hucid[1:nsamplingevents])
+#need initial values for lambda
+# jags.inits <- function(){
+#   list("Se" = runif(1, 0.6, 1), 'Sp' = runif(1, 0.6, 1), 
+#        "pi" = array(runif(nsamplingevents*nmonths*nyears), dim = c(nmonths, nyears, nsites)))
+# }
+variable.names = c('Se', 'Sp', 'lambda', 'pi') #apparent prevalence?
+
+nadapt <- 500
+niter <- 10
+thin <- 1
+
+setwd("~/Github/AI_surveillance")
+ar1.mod <- jags.model(file = "ar1_sampling_events.txt", data=jags.data, n.chains = 3,
+                            n.adapt=nadapt)
+saveRDS(ar1.mod, "modelruns/icar_sampling_events_ar1_adapt.rds")
+update(ar1.mod, nadapt)
+ar1.mod.fit <- coda.samples(model=ar1.mod, variable.names=variable.names, n.iter=niter,
+                                  thin=thin)
+saveRDS(ar1.mod.fit, "modelruns/icar_sample_events_ar1_fit.rds")
+
+#plots
+setwd("~/HP/Plots")
+pdf("ar1_trace_density_sensitivity_specificity.pdf")
+plot(ar1.mod.fit[,1:2])
+dev.off()
+
+pdf("ar1_trace_density_sensitivity_specificity.pdf")
+plot(ar1.mod.fit[,1:2])
+dev.off()
+
+pdf("ar1_sensitivity_autocorrelation.pdf")
+autocorr.plot(ar1.mod.fit[,'Se'], main="Sensitivity Autocorrelation")
+dev.off()
+
+pdf("ar1_specificity_autocorrelation.pdf")
+autocorr.plot(ar1.mod.fit[, 'Sp'], main="Specificity Autocorrelation")
+dev.off()
+
+rm(ar1.mod, ar1.mod.fit)
+
+###################################################################################
+####################################################################################
 ####################################################################################
 #workflow for updated models
 ###################################################################################
@@ -426,4 +476,4 @@ saveRDS(spatial.mod, "modelruns/icar_sampling_events_adapt.txt")
 spatial.mod.fit <- coda.samples(model=spatial.mod, variable.names=variable.names, n.iter=niter,
                                 thin=thin)
 saveRDS(spatial.mod.fit, "modelruns/icar_sample_events_fit.txt")
->>>>>>> Stashed changes
+
