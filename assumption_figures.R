@@ -6,7 +6,8 @@
 
 library(ggplot2)
 
-setwd("~/Github")
+# setwd("~/Github")
+setwd("~/HP/Data")
 data <- readRDS("AVHS_samplingevent.rds")
 
 ##################################################################################
@@ -38,11 +39,12 @@ watershed <- data.frame(watershed = unique(data$huc4.b), n = NA, y = NA,
                         apparent.prevalence = NA)
 
 for ( i in 1:length(watershed$watershed)) {
-  hold <- data[data$huc4.b == i, ]
+  j <- unique(watershed$watershed[i])
+  hold <- data[data$huc4.b == j, ]
   hold$tally <- 1
-  watershed[watershed$watershed == i, ]$n <- sum(hold$tally)
+  watershed[watershed$watershed == j, ]$n <- sum(hold$tally)
   hold.y <- hold[hold$AIpcr_susneg == "positive", ]
-  watershed[watershed$watershed == i, ]$y <- sum(hold.y$tally)
+  watershed[watershed$watershed == j, ]$y <- sum(hold.y$tally)
 }
 
 watershed$apparent.prevalence <- watershed$y/watershed$n
