@@ -30,6 +30,23 @@ for (i in 1:length(sampling.events$sampling.event)) {
 
 sampling.events$apparent.prevalence <- sampling.events$y/sampling.events$n
 
+#create a data set with watershed, number of samples, number of positive
+#samples, and the apparent prevalence
+
+data$huc4.b <- as.integer(data$huc4)
+watershed <- data.frame(watershed = unique(data$huc4.b), n = NA, y = NA,
+                        apparent.prevalence = NA)
+
+for ( i in 1:length(watershed$watershed)) {
+  hold <- data[data$huc4.b == i, ]
+  hold$tally <- 1
+  watershed[watershed$watershed == i, ]$n <- sum(hold$tally)
+  hold.y <- hold[hold$AIpcr_susneg == "positive", ]
+  watershed[watershed$watershed == i, ]$y <- sum(hold.y$tally)
+}
+
+watershed$apparent.prevalence <- watershed$y/watershed$n
+
 # data$apparent.prevalence <- data$y/data$n
 # data[is.na(data)] <- 0
 # 
