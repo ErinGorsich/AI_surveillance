@@ -14,7 +14,7 @@
 
 # See notes on priors in Chapter 5 of Gelman et al. BDA, and 
 # http://andrewgelman.com/2009/10/21/some_practical/
-sink("base_sampling_test.txt")
+sink("base_sampling_test_nospecies.txt")
 cat("model {
     #likelihood (i = month, j = year, k = huc, l = species, s = sampling events)
     for (s in 1:nsamplingevents) {
