@@ -87,9 +87,10 @@ base.nospecies.mod <- jags.model(file = "base_sampling_test_nospecies.txt", data
                                  n.chains = 3, n.adapt=nadapt)
 setwd("~/Github/AI_surveillance/model runs")
 saveRDS(base.nospecies.mod, "base_test_nospecies_adapt.rds")
-update(base.nospecies.mod, nadapt)
+# update(base.nospecies.mod, nadapt)
 base.nospecies.mod.fit <- coda.samples(model=base.nospecies.mod, variable.names = variable.names,
                                        n.iter = niter, thin=thin)
+base.nospecies.mod.burnin <- window(base.nospecies.mod.fit, start = 50)
 saveRDS(base.nospecies.mod.fit, "base_test_nospecies_fit.rds")
 
 #########################################################################################
