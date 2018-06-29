@@ -128,22 +128,26 @@ for ( i in 1:length(watershed$huc)) {
 
 watershed$apparent.prevalence <- watershed$y/watershed$n
 
+watershed <- watershed[!(watershed$apparent.prevalence == "NaN"), ]
 temp <- data.frame(watershed = watershed$huc, month = watershed$month, year = watershed$year,
                    app.prev.huc = watershed$apparent.prevalence)
 temp.2 <- data.frame(watershed = sampling.events$watershed, month = sampling.events$month, year = sampling.events$year,
                      sampling.event = sampling.events$sampling.event,
                      app.prev.se = sampling.events$apparent.prevalence)
-plot <- inner_join(temp, temp.2, by="watershed")
+plot <- inner_join(temp, temp.2, by=c("watershed", "month", 'year'))
 
-for (i in 1:nmonths) {
-  for (j in 1:nyears) {
-    ggplot(data=plot, aes(x=app.prev.huc, y=app.prev.se)) + 
-      geom_point(aes(color = watershed)) +
-      scale_colour_manual(values = pal) +
-      ylab("Sampling Event Apparent Prevalence") +
-      xlab("Watershed Apparent Prevalence") +
-      theme(panel.background=element_blank(),
-            axis.line = element_line(),
-            legend.position = "none")
-  }
-}
+test <- ggplot(data=plot, aes(x=app.prev.huc, y=app.prev.se)) + 
+          geom_point(aes(color = watershed), size = 0.75) +
+          scale_colour_manual(values = pal) +
+          ylab("Sampling Event Apparent Prevalence") +
+          xlab("Watershed Apparent Prevalence") +
+          theme(panel.background=element_blank(),
+                axis.line = element_line(),
+                legend.position = "none") +
+          scale_x_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1), labels = c("0", "", "0.5", "", "1"))
+
+
+pdf("test_exchangability_m_y.pdf")
+test + facet_grid(year ~ month)
+dev.off()
+ggsave(filename = "test_exchangability_m_y.jpeg") #, width = 6, height = 4, dpi = 300)
