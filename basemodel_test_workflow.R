@@ -90,7 +90,7 @@ saveRDS(base.nospecies.mod, "base_test_nospecies_adapt.rds")
 # update(base.nospecies.mod, nadapt)
 base.nospecies.mod.fit <- coda.samples(model=base.nospecies.mod, variable.names = variable.names,
                                        n.iter = niter, thin=thin)
-base.nospecies.mod.burnin <- window(base.nospecies.mod.fit, start = 50)
+base.nospecies.mod.burnin <- window(base.nospecies.mod.fit, start = (nadapt+50))
 saveRDS(base.nospecies.mod.fit, "base_test_nospecies_fit.rds")
 
 #########################################################################################
@@ -117,9 +117,10 @@ base.dabbling.mod <- jags.model(file = "base_sampling_test_nospecies.txt", data 
                                 n.chains = 3, n.adapt=nadapt)
 setwd("~/Github/AI_surveillance/modelruns")
 saveRDS(base.dabbling.mod, "base_dabbling_only_adapt.rds")
-base.dabbling.mod <- update(base.dabbling.mod, nadapt)
+# base.dabbling.mod <- update(base.dabbling.mod, nadapt)
 base.dabbling.mod.fit <- coda.samples(model = base.dabbling.mod, variable.names = variable.names,
                                       n.iter = niter, thin=thin)
+base.dabbling.mod.burnin <- window(base.dabbling.mod.fit, start = (nadapt+50))
 saveRDS(base.dabbling.mod.fit, "base_dabbling_only_fit.rds")
 
 #run only diving ducks
