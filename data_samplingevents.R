@@ -242,15 +242,15 @@ overall.df <- as.data.frame(overall.matrix)
 data <- inner_join(data, overall.df, by = c("species.code.full"="species.code"))
 
 # setwd("~/Github")
-setwd("~/HP/Data")
+# setwd("~/HP/Data")
 saveRDS(data, "AVHS_samplingevent_speciesgroup.rds")
 
 ######################################################################################################
 #add a column to tell which watershed
 ######################################################################################################
 
-# setwd("~/Honors Thesis/Project/hydrologic_units")
-setwd("~/HP/hydrologic_units")
+setwd("~/Honors Thesis/Project/hydrologic_units")
+# setwd("~/HP/hydrologic_units")
 huc4 <- shapefile("huc4.shp")
 projection(huc4) <- CRS("+proj=longlat +ellps=WGS84")
 
@@ -271,28 +271,54 @@ data <- data[!(is.na(data$huc4)), ]
 
 # data <- readRDS("~/HP/Data/AVHS_samplingevent.rds")
 
-locations <- unique(cbind(data$long, data$lat))
-total.locations <- length(locations[,1])
+# locations <- unique(cbind(data$long, data$lat))
+# total.locations <- length(locations[,1])
+# total.years <- length(unique(data$collection.year))
+# total.weeks <- 53 * total.years
+# location.x <- rep(locations[ ,1], total.weeks)
+# location.y <- rep(locations[, 2], total.weeks)
+# week <- rep(seq(1, 53, 1), each = total.locations, times = total.years)
+# year <- rep(c("2007", "2008", "2009", "2010", "2015"), each = total.locations*53)
+# assign.event <- data.frame(location.x = location.x, location.y=location.y, week = week,
+#                            year=year)
+# assign.event$prelim.number <- seq(1, length(location.x), 1)
+# backup.event <- assign.event
+# 
+# #find location, month, year combinations with data and assign a sample event number to each
+# data$collection.date <- mdy(data$collection.date.char)
+# data$week <- epiweek(data$collection.date)
+# data$collection.year <- as.factor(data$collection.year)
+# test <- inner_join(data, assign.event, by = c("long"="location.x", "lat"="location.y", "week"="week", "collection.year"="year"))
+# unique <- unique(test$prelim.number)
+# temp <- filter(assign.event, prelim.number %in% unique)
+# temp$event.number.week <- seq(1, length(temp$prelim.number))
+# test <- inner_join(test, temp, by = c("long"="location.x", "lat"="location.y", "week"="week", "collection.year"="year",
+#                                       'prelim.number'="prelim.number"))
+# data <- test
+# setwd("~/HP/Data")
+# saveRDS(data, "AVHS_samplingevent.rds")
+
+#assign sampling event numbers based on collection.group name, not lat and long
+locations <- unique(data$collection.group)
+total.locations <- length(locations)
 total.years <- length(unique(data$collection.year))
 total.weeks <- 53 * total.years
-location.x <- rep(locations[ ,1], total.weeks)
-location.y <- rep(locations[, 2], total.weeks)
 week <- rep(seq(1, 53, 1), each = total.locations, times = total.years)
 year <- rep(c("2007", "2008", "2009", "2010", "2015"), each = total.locations*53)
-assign.event <- data.frame(location.x = location.x, location.y=location.y, week = week,
+assign.event <- data.frame(location = locations, week = week,
                            year=year)
-assign.event$prelim.number <- seq(1, length(location.x), 1)
+assign.event$prelim.number <- seq(1, length(assign.event$location), 1)
 backup.event <- assign.event
 
 #find location, month, year combinations with data and assign a sample event number to each
 data$collection.date <- mdy(data$collection.date.char)
 data$week <- epiweek(data$collection.date)
 data$collection.year <- as.factor(data$collection.year)
-test <- inner_join(data, assign.event, by = c("long"="location.x", "lat"="location.y", "week"="week", "collection.year"="year"))
+test <- inner_join(data, assign.event, by = c("collection.group"="location", "week"="week", "collection.year"="year"))
 unique <- unique(test$prelim.number)
 temp <- filter(assign.event, prelim.number %in% unique)
 temp$event.number.week <- seq(1, length(temp$prelim.number))
-test <- inner_join(test, temp, by = c("long"="location.x", "lat"="location.y", "week"="week", "collection.year"="year",
+test <- inner_join(test, temp, by = c("collection.group"="location", "week"="week", "collection.year"="year",
                                       'prelim.number'="prelim.number"))
 data <- test
 setwd("~/HP/Data")

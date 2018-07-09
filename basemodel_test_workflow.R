@@ -170,3 +170,47 @@ base.dandd.mod <- update(base.dabbling.mod, nadapt)
 base.dandd.mod.fit <- coda.samples(model = base.dandd.mod, variable.names = variable.names, 
                                    n.iter=niter, thin=thin)
 saveRDS(base.dandd.mod.fit, "base_dand_fit.rds")
+
+###############################################################################################
+#test 4
+#run base model with sampling events defined by location name; all species
+###############################################################################################
+
+jags.data <- list(nsamplingevents = nsamplingevents, nspecies = nspecies, 
+                  nmonths = nmonths, nyears = nyears, nhucs = nhucs, n = n, y = y, 
+                  month = data$month[1:nsamplingevents],
+                  year = data$yearid[1:nsamplingevents], huc = data$hucid[1:nsamplingevents])
+
+variable.names = c("Se", "Sp", "pi")
+
+setwd("~/Github/AI_surveillance")
+base.location.mod <- jags.model(file = "base_sampling_events.txt", data = jags.data, 
+                             n.chains = 3, n.adapt=nadapt)
+base.location.mod.fit <- coda.samples(model = base.location.mod, variable.names = variable.names, 
+                                   n.iter=niter, thin=thin)
+base.location.mod.burnin <- window(base.location.mod.fit, start = (nadapt+50))
+setwd("~/Github/AI_surveillance/modelruns")
+saveRDS(base.location.mod.burnin, "base_location_fit.rds")
+
+###############################################################################################
+#test 5
+#run base model with sampling events defined by location name; species groups 1 and 2
+###############################################################################################
+
+nspecies = 2
+
+jags.data <- list(nsamplingevents = nsamplingevents, nspecies = nspecies, 
+                  nmonths = nmonths, nyears = nyears, nhucs = nhucs, n = n, y = y, 
+                  month = data$month[1:nsamplingevents],
+                  year = data$yearid[1:nsamplingevents], huc = data$hucid[1:nsamplingevents])
+
+variable.names = c("Se", "Sp", "pi")
+
+setwd("~/Github/AI_surveillance")
+base.location.dandd.mod <- jags.model(file = "base_sampling_events.txt", data = jags.data, 
+                                n.chains = 3, n.adapt=nadapt)
+base.location.dandd.mod.fit <- coda.samples(model = base.location.dandd.mod, variable.names = variable.names, 
+                                      n.iter=niter, thin=thin)
+base.location.dandd.mod.burnin <- window(base.location.dandd.mod.fit, start = (nadapt+50))
+setwd("~/Github/AI_surveillance/modelruns")
+saveRDS(base.location.dandd.mod.burnin, "base_location_dandd_fit.rds")
