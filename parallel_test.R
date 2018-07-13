@@ -10,8 +10,8 @@ library(snow)
 library(rjags)
 library(coda)
 
-setwd("~/Github/AI_surveillance")
-source("define_models.rds")
+# setwd("~/Github/AI_surveillance")
+# source("define_models.rds")
 
 ##########################################################################################
 #data
@@ -74,15 +74,19 @@ jags.data <- list(nsamplingevents = nsamplingevents, nspecies = nspecies,
 
 variable.names = c("Se", "Sp", "pi")
 
+nchains = 3
+
 coda.samples.wrapper <- function(j)
 {
   jags.data <- list(nsamplingevents = nsamplingevents, nspecies = nspecies, 
                     nmonths = nmonths, nyears = nyears, nhucs = nhucs, n = n, y = y, 
                     month = month, year = year, huc = huc)
+  variable.names = c("Se", 'Sp', "pi")
   nadapt <- 1000
   niter <- 10
   thin <- 2
   nchains <- 3
+  setwd("~/Github/AI_surveillance")
   base.parallel.mod <- jags.model("base_sampling_events.txt", data = jags.data,
                                   n.chains=nchains, n.adapt = nadapt)
   
@@ -96,6 +100,7 @@ parallel.start.time = proc.time()
                     list("nsamplingevents", "nspecies", "nmonths", "nyears", "nhucs", "n", 'y',
                           'month', "year", "huc", "niter", "thin"))
     par.samples <- clusterApply(chain.1, 1:nchains, coda.samples.wrapper)
+    
     for(i in 1:length(par.samples)) {
       par.samples[[i]] <- par.samples[[i]][[1]]
     }
