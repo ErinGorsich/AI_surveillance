@@ -14,7 +14,7 @@ if (Erin){
     data <- readRDS('samplingevent_n_y_speciesgroup.rds')
 } else {
     setwd("~/Github/AI_surveillance")
-    data <- readRDS('~/Github/samplingevent_n_y_speciesgroup.rds')
+    data <- readRDS('~/Github/locationsamplingevent_n_y_speciesgroup.rds')
 }
 source("define_models.r")
 source("define_neighborhood.r")
@@ -38,7 +38,7 @@ data$month <- as.integer(data$month)
 
 #define variables
 nsamplingevents <- length(unique(data$sample.event)) #13589
-nspecies <- length(unique(data$species.group)) #7
+nspecies <- 3 #length(unique(data$species.group)) #7
 nmonths <- length(seq(1, 12)) #12
 nyears <- length(unique(data$year)) #5
 nhucs <- length(unique(data$watershed)) #195
@@ -62,7 +62,7 @@ for (s in 1:nsamplingevents) {
 #######################################################################################
 #base model
 #########################################################################################
-nadapt <- 500
+nadapt <- 1000
 niter <- 10
 thin <- 1
 
@@ -85,19 +85,20 @@ jags.data <- list(nsamplingevents = nsamplingevents, nspecies = nspecies,
 #   list("Se" = runif(1, 0.6, 1), 'Sp' = runif(1, 0.6, 1), 
 #        "pi" = array(runif(nsamplingevents*nmonths*nyears), dim = c(nmonths, nyears, nsites)))
 # }
-variable.names = c('Se', 'Sp', 'lambda', 'pi') #apparent prevalence?
+variable.names = c('Se', 'Sp', 'pi') #apparent prevalence?
 
 
 
 #setwd("~/Github/AI_surveillance")
+start <- proc.time
 base.mod <- jags.model(file = "base_sampling_events.txt", data=jags.data,
     n.chains=3, n.adapt=nadapt)
 saveRDS(base.mod, "modelruns/base_sampling_events_adapt.rds")
-update(base.mod, nadapt)
 base.mod.fit <- coda.samples(model=base.mod, variable.names=variable.names, n.iter=niter, 
                              thin=thin)
 saveRDS(base.mod.fit, "modelruns/base_sampling_event_fit.rds")
-
+end <- proc.time()
+total <- end - start
 #plots
 setwd("~/HP/Plots")
 pdf("base_trace_density_sensitivity_specificity.pdf")
@@ -116,7 +117,9 @@ pdf("base_specificity_autocorrelation.pdf")
 autocorr.plot(base.mod.fit[, 'Sp'], main="Specificity Autocorrelation")
 dev.off()
 
-rm(base.mod, base.mod.fit)
+
+#need to do a read-in, but look at plots first
+#rm(base.mod, base.mod.fit)
 
 ###################################################################################################
 #spatial model - queens
