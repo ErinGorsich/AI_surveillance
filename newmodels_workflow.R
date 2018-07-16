@@ -92,8 +92,6 @@ jags.data <- list(nsamplingevents = nsamplingevents, nspecies = nspecies,
 # }
 variable.names = c('Se', 'Sp', 'pi') #apparent prevalence?
 
-
-
 #setwd("~/Github/AI_surveillance")
 start <- proc.time
 base.mod <- jags.model(file = "base_sampling_events.txt", data=jags.data,
@@ -143,7 +141,7 @@ jags.data <- list(nsamplingevents = nsamplingevents, nspecies = nspecies, nmonth
 #   list("Se" = runif(1, 0.6, 1), 'Sp' = runif(1, 0.6, 1), 
 #        "pi" = array(runif(nsamplingevents*nmonths*nyears), dim = c(nmonths, nyears, nsites)))
 # }
-variable.names = c('Se', 'Sp', 'lambda', 'pi') #apparent prevalence?
+variable.names = c('Se', 'Sp', 'pi') #apparent prevalence?
 
 nadapt <- 1000
 nburn <- 100
@@ -205,20 +203,32 @@ jags.data <- list(nsamplingevents = nsamplingevents, nspecies = nspecies, nmonth
 #   list("Se" = runif(1, 0.6, 1), 'Sp' = runif(1, 0.6, 1), 
 #        "pi" = array(runif(nsamplingevents*nmonths*nyears), dim = c(nmonths, nyears, nsites)))
 # }
-variable.names = c('Se', 'Sp', 'lambda', 'pi') #apparent prevalence?
+variable.names = c('Se', 'Sp', 'pi') #apparent prevalence?
 
 nadapt <- 1000
+nburn <- 100
 niter <- 10
 thin <- 1
+nchains <- 3
 
-setwd("~/Github/AI_surveillance")
-wtqueens.mod <- jags.model(file = "icar_sampling_events.txt", data=jags.data, n.chains = 3,
-                         n.adapt=nadapt)
-saveRDS(wtqueens.mod, "modelruns/icar_sampling_events_wtqueens_adapt.rds")
-update(wtqueens.mod, nadapt)
-wtqueens.mod.fit <- coda.samples(model=wtqueens.mod, variable.names=variable.names, n.iter=niter,
-                               thin=thin)
-saveRDS(wtqueens.mod.fit, "modelruns/icar_sample_events_wtqueens_fit.rds")
+#fit in parallel
+cl <- makePSOCKcluster(nchains)
+parJagsModel(cl=cl, name="wtqueens.adapt", 
+             file = "~/Github/AI_surveillance/icar_sampling_events.txt",
+             data = jags.data, n.chains=nchains, n.adapt=nadapt)
+parUpdate(cl=cl, model="wtqueens.adapt", n.iter=nburn)
+wtqueens.mod.fit <- parCodaSamples(cl=cl, model="wtqueens.adapt", variable.names=variable.names,
+                                 n.iter=niter, thin=thin)
+saveRDS(wtqueens.mod.fit, "~/Github/wtqueens_icar_fit.rds")
+
+# setwd("~/Github/AI_surveillance")
+# wtqueens.mod <- jags.model(file = "icar_sampling_events.txt", data=jags.data, n.chains = 3,
+#                          n.adapt=nadapt)
+# saveRDS(wtqueens.mod, "modelruns/icar_sampling_events_wtqueens_adapt.rds")
+# update(wtqueens.mod, nadapt)
+# wtqueens.mod.fit <- coda.samples(model=wtqueens.mod, variable.names=variable.names, n.iter=niter,
+#                                thin=thin)
+# saveRDS(wtqueens.mod.fit, "modelruns/icar_sample_events_wtqueens_fit.rds")
 
 #plots
 setwd("~/HP/Plots")
@@ -255,20 +265,32 @@ jags.data <- list(nsamplingevents = nsamplingevents, nspecies = nspecies, nmonth
 #   list("Se" = runif(1, 0.6, 1), 'Sp' = runif(1, 0.6, 1), 
 #        "pi" = array(runif(nsamplingevents*nmonths*nyears), dim = c(nmonths, nyears, nsites)))
 # }
-variable.names = c('Se', 'Sp', 'lambda', 'pi') #apparent prevalence?
+variable.names = c('Se', 'Sp', 'pi') #apparent prevalence?
 
 nadapt <- 1000
+nburn <- 100
 niter <- 10
 thin <- 1
+nchains <- 3
 
-setwd("~/Github/AI_surveillance")
-network.mod <- jags.model(file = "icar_sampling_events.txt", data=jags.data, n.chains = 3,
-                         n.adapt=nadapt)
-saveRDS(network.mod, "modelruns/icar_sampling_events_network_adapt.rds")
-update(network.mod, nadapt)
-network.mod.fit <- coda.samples(model=network.mod, variable.names=variable.names, n.iter=niter,
-                               thin=thin)
-saveRDS(network.mod.fit, "modelruns/icar_sample_events_network_fit.rds")
+#fit in parallel
+cl <- makePSOCKcluster(nchains)
+parJagsModel(cl=cl, name="network.adapt", 
+             file = "~/Github/AI_surveillance/icar_sampling_events.txt",
+             data = jags.data, n.chains=nchains, n.adapt=nadapt)
+parUpdate(cl=cl, model="network.adapt", n.iter=nburn)
+network.mod.fit <- parCodaSamples(cl=cl, model="network.adapt", variable.names=variable.names,
+                                 n.iter=niter, thin=thin)
+saveRDS(network.mod.fit, "~/Github/network_icar_fit.rds")
+
+# setwd("~/Github/AI_surveillance")
+# network.mod <- jags.model(file = "icar_sampling_events.txt", data=jags.data, n.chains = 3,
+#                          n.adapt=nadapt)
+# saveRDS(network.mod, "modelruns/icar_sampling_events_network_adapt.rds")
+# update(network.mod, nadapt)
+# network.mod.fit <- coda.samples(model=network.mod, variable.names=variable.names, n.iter=niter,
+#                                thin=thin)
+# saveRDS(network.mod.fit, "modelruns/icar_sample_events_network_fit.rds")
 
 #plots
 setwd("~/HP/Plots")
@@ -305,20 +327,33 @@ jags.data <- list(nsamplingevents = nsamplingevents, nspecies = nspecies, nmonth
 #   list("Se" = runif(1, 0.6, 1), 'Sp' = runif(1, 0.6, 1), 
 #        "pi" = array(runif(nsamplingevents*nmonths*nyears), dim = c(nmonths, nyears, nsites)))
 # }
-variable.names = c('Se', 'Sp', 'lambda', 'pi') #apparent prevalence?
+variable.names = c('Se', 'Sp', 'pi') #apparent prevalence?
 
 nadapt <- 1000
+nburn <- 100
 niter <- 10
 thin <- 1
+nchains <- 3
 
-setwd("~/Github/AI_surveillance")
-wtnetwork.mod <- jags.model(file = "icar_sampling_events.txt", data=jags.data, n.chains = 3,
-                         n.adapt=nadapt)
-saveRDS(wtnetwork.mod, "modelruns/icar_sampling_events_wtnetwork_adapt.rds")
-update(wtnetwork.mod, nadapt)
-wtnetwork.mod.fit <- coda.samples(model=wtnetwork.mod, variable.names=variable.names, n.iter=niter,
-                               thin=thin)
-saveRDS(wtnetwork.mod.fit, "modelruns/icar_sample_events_wtnetwork_fit.rds")
+#fit in parallel
+cl <- makePSOCKcluster(nchains)
+parJagsModel(cl=cl, name="wtnetwork.adapt", 
+             file = "~/Github/AI_surveillance/icar_sampling_events.txt",
+             data = jags.data, n.chains=nchains, n.adapt=nadapt)
+parUpdate(cl=cl, model="wtnetwork.adapt", n.iter=nburn)
+wtnetwork.mod.fit <- parCodaSamples(cl=cl, model="wtnetwork.adapt", variable.names=variable.names,
+                                 n.iter=niter, thin=thin)
+saveRDS(wtnetwork.mod.fit, "~/Github/wtnetwork_icar_fit.rds")
+
+
+# setwd("~/Github/AI_surveillance")
+# wtnetwork.mod <- jags.model(file = "icar_sampling_events.txt", data=jags.data, n.chains = 3,
+#                          n.adapt=nadapt)
+# saveRDS(wtnetwork.mod, "modelruns/icar_sampling_events_wtnetwork_adapt.rds")
+# update(wtnetwork.mod, nadapt)
+# wtnetwork.mod.fit <- coda.samples(model=wtnetwork.mod, variable.names=variable.names, n.iter=niter,
+#                                thin=thin)
+# saveRDS(wtnetwork.mod.fit, "modelruns/icar_sample_events_wtnetwork_fit.rds")
 
 #plots
 setwd("~/HP/Plots")
@@ -339,6 +374,7 @@ autocorr.plot(wtnetwork.mod.fit[, 'Sp'], main="Specificity Autocorrelation")
 dev.off()
 
 rm(wtnetwork.mod, wtnetwork.mod.fit)
+
 ##########################################################################################
 #AR1 Model - Temporal Correlation
 #########################################################################################
@@ -350,20 +386,32 @@ jags.data <- list(nsamplingevents = nsamplingevents, nspecies = nspecies, nmonth
 #   list("Se" = runif(1, 0.6, 1), 'Sp' = runif(1, 0.6, 1), 
 #        "pi" = array(runif(nsamplingevents*nmonths*nyears), dim = c(nmonths, nyears, nsites)))
 # }
-variable.names = c('Se', 'Sp', 'lambda', 'pi') #apparent prevalence?
+variable.names = c('Se', 'Sp', 'pi') #apparent prevalence?
 
-nadapt <- 500
+nadapt <- 1000
+nburn <- 100
 niter <- 10
 thin <- 1
+nchains <- 3
 
-setwd("~/Github/AI_surveillance")
-ar1.mod <- jags.model(file = "ar1_sampling_events.txt", data=jags.data, n.chains = 3,
-                            n.adapt=nadapt)
-saveRDS(ar1.mod, "modelruns/icar_sampling_events_ar1_adapt.rds")
-update(ar1.mod, nadapt)
-ar1.mod.fit <- coda.samples(model=ar1.mod, variable.names=variable.names, n.iter=niter,
-                                  thin=thin)
-saveRDS(ar1.mod.fit, "modelruns/icar_sample_events_ar1_fit.rds")
+#fit in parallel
+cl <- makePSOCKcluster(nchains)
+parJagsModel(cl=cl, name="temporal.adapt", 
+             file = "~/Github/AI_surveillance/ar1_sampling_events.txt",
+             data = jags.data, n.chains=nchains, n.adapt=nadapt)
+parUpdate(cl=cl, model="temporal.adapt", n.iter=nburn)
+temporal.mod.fit <- parCodaSamples(cl=cl, model="temporal.adapt", variable.names=variable.names,
+                                 n.iter=niter, thin=thin)
+saveRDS(temporal.mod.fit, "~/Github/temporal_ar1_fit.rds")
+
+# setwd("~/Github/AI_surveillance")
+# ar1.mod <- jags.model(file = "ar1_sampling_events.txt", data=jags.data, n.chains = 3,
+#                             n.adapt=nadapt)
+# saveRDS(ar1.mod, "modelruns/icar_sampling_events_ar1_adapt.rds")
+# update(ar1.mod, nadapt)
+# ar1.mod.fit <- coda.samples(model=ar1.mod, variable.names=variable.names, n.iter=niter,
+#                                   thin=thin)
+# saveRDS(ar1.mod.fit, "modelruns/icar_sample_events_ar1_fit.rds")
 
 #plots
 setwd("~/HP/Plots")
