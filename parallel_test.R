@@ -40,7 +40,7 @@ data$month <- as.integer(data$month)
 
 #define variables
 nsamplingevents <- length(unique(data$sample.event)) #12787
-nspecies <- length(unique(data$species.group)) #7
+nspecies <- 2  #length(unique(data$species.group)) #7
 nmonths <- length(seq(1, 12)) #12
 nyears <- length(unique(data$year)) #5
 nhucs <- length(unique(data$watershed)) #195
@@ -110,3 +110,66 @@ parallel.end.time = proc.time()
 parallel.total.time = parallel.end.time - parallel.start.time
 
 
+######################################################################################
+######################################################################################
+#Attempt to run jags in parallel using this tutuorial:
+#https://stephendavidgregory.github.io/statistics/Jags-in-parallel
+#and the dclone package with jags.parfit
+######################################################################################
+######################################################################################
+
+#data prepped as before
+
+month = data$month[1:nsamplingevents]
+year = data$yearid[1:nsamplingevents]
+huc = data$hucid[1:nsamplingevents]
+
+jags.data <- list(nsamplingevents = nsamplingevents, nspecies = nspecies, 
+                  nmonths = nmonths, nyears = nyears, nhucs = nhucs, n = n, y = y, 
+                  month = month, year = year, huc = huc)
+
+variable.names = c("Se", "Sp", "pi")
+
+nchains = 3
+
+timer <- proc.time()
+cl <- makePSOCKcluster(nchains)
+tmp <- clusterEvalQ(cl, library(dclone))
+setwd("~/Github/AI_surveillance")
+fit <- jags.parfit(cl = cl, data = jags.data, params = variable.names,
+                   model = "~/Github/AI_surveillance/base_sampling_events.txt", 
+                   n.chains = 3,
+                   n.adapt = 1000, n.update = 100, n.iter = 10, thin = 1)
+stopCluster(cl)
+time.taken <- proc.time() - timer
+
+######################################################################################
+######################################################################################
+#Attempt to run jags in parallel using this tutuorial:
+#https://stephendavidgregory.github.io/statistics/Jags-in-parallel
+#and the dclone package with parJagsModel and parCodasamples
+######################################################################################
+######################################################################################
+
+#data prepped as before
+
+month = data$month[1:nsamplingevents]
+year = data$yearid[1:nsamplingevents]
+huc = data$hucid[1:nsamplingevents]
+
+jags.data <- list(nsamplingevents = nsamplingevents, nspecies = nspecies, 
+                  nmonths = nmonths, nyears = nyears, nhucs = nhucs, n = n, y = y, 
+                  month = month, year = year, huc = huc)
+
+variable.names = c("Se", "Sp", "pi")
+
+nchains = 3
+
+timer <- proc.time()
+cl <- makePSOCKcluster(nchains)
+parJagsModel(cl = cl, name = 'res', file = "~/Github/AI_surveillance/base_sampling_events.txt",
+             data = jags.data, n.chains=nchains, n.adapt = 1000)
+parUpdate(cl=cl, object = 'res', n.iter = 100)
+fit <- parCodaSamples(cl = cl, model = "res", variable.names = variable.names,
+                      n.iter = 10, thin = 1)
+time.taken <- proc.time() - timer

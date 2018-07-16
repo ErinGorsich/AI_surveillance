@@ -5,6 +5,7 @@
 #load packages
 library(rjags)
 library(coda)
+library(dclone)
 
 Erin <- FALSE
 
@@ -23,6 +24,10 @@ source("define_neighborhood.r")
 data$month <- as.numeric(data$month)
 data$year <- as.numeric(as.character(data$year))
 
+#limit data to only the species groups wanted and change group 4 to group 3
+data <- data[data$species.group %in% c("1", "2", "4"), ]
+data$species.group[data$species.group == "4"] <- 3
+
 #add a hucid column
 temp <- data.frame(watershed = (unique(data$watershed)))
 temp$hucid <- seq(1, length(temp[,1]))
@@ -37,8 +42,8 @@ data$yearid <- temp$yearid[match(data$year, temp$year)]
 data$month <- as.integer(data$month)
 
 #define variables
-nsamplingevents <- length(unique(data$sample.event)) #13589
-nspecies <- 3 #length(unique(data$species.group)) #7
+nsamplingevents <- length(unique(data$sample.event)) #12349
+nspecies <- length(unique(data$species.group)) #3
 nmonths <- length(seq(1, 12)) #12
 nyears <- length(unique(data$year)) #5
 nhucs <- length(unique(data$watershed)) #195
@@ -141,17 +146,29 @@ jags.data <- list(nsamplingevents = nsamplingevents, nspecies = nspecies, nmonth
 variable.names = c('Se', 'Sp', 'lambda', 'pi') #apparent prevalence?
 
 nadapt <- 1000
+nburn <- 100
 niter <- 10
 thin <- 1
+nchains <- 3
 
-setwd("~/Github/AI_surveillance")
-queens.mod <- jags.model(file = "icar_sampling_events.txt", data=jags.data, n.chains = 3,
-                          n.adapt=nadapt)
-saveRDS(queens.mod, "modelruns/icar_sampling_events_queens_adapt.rds")
-update(queens.mod, nadapt)
-queens.mod.fit <- coda.samples(model=queens.mod, variable.names=variable.names, n.iter=niter,
-                                thin=thin)
-saveRDS(queens.mod.fit, "modelruns/icar_sample_events_queens_fit.rds")
+#fit in parallel
+cl <- makePSOCKcluster(nchains)
+parJagsModel(cl=cl, name="queens.adapt", 
+             file = "~/Github/AI_surveillance/icar_sampling_events.txt",
+             data = jags.data, n.chains=nchains, n.adapt=nadapt)
+parUpdate(cl=cl, model="queens.adapt", n.iter=nburn)
+queens.mod.fit <- parCodaSamples(cl=cl, model="queens.adapt", variable.names=variable.names,
+                                   n.iter=niter, thin=thin)
+saveRDS(queens.mod.fit, "~/Github/queens_icar_fit.rds")
+
+# setwd("~/Github/AI_surveillance")
+# queens.mod <- jags.model(file = "icar_sampling_events.txt", data=jags.data, n.chains = 3,
+#                           n.adapt=nadapt)
+# saveRDS(queens.mod, "modelruns/icar_sampling_events_queens_adapt.rds")
+# update(queens.mod, nadapt)
+# queens.mod.fit <- coda.samples(model=queens.mod, variable.names=variable.names, n.iter=niter,
+#                                 thin=thin)
+# saveRDS(queens.mod.fit, "modelruns/icar_sample_events_queens_fit.rds")
 
 #plots
 setwd("~/HP/Plots")
