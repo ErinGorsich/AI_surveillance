@@ -249,8 +249,8 @@ saveRDS(data, "AVHS_samplingevent_speciesgroup.rds")
 #add a column to tell which watershed
 ######################################################################################################
 
-setwd("~/Honors Thesis/Project/hydrologic_units")
-# setwd("~/HP/hydrologic_units")
+# setwd("~/Honors Thesis/Project/hydrologic_units")
+setwd("~/HP/hydrologic_units")
 huc4 <- shapefile("huc4.shp")
 projection(huc4) <- CRS("+proj=longlat +ellps=WGS84")
 
@@ -322,7 +322,7 @@ test <- inner_join(test, temp, by = c("collection.group"="location", "week"="wee
                                       'prelim.number'="prelim.number"))
 data <- test
 setwd("~/HP/Data")
-saveRDS(data, "AVHS_samplingevent.rds")
+saveRDS(data, "AVHS_samplingevent_locationname.rds")
 
 ##########################################################################################################################
 #extract number of samples, number of positive samples for each sampling event and by species group/sampling event
@@ -346,5 +346,5 @@ for (i in 1:length(event$sample.event)) {
 }
 
 setwd("~/Github")
-saveRDS(event, "samplingevent_n_y_speciesgroup.rds")
+saveRDS(event, "locationsamplingevent_n_y_speciesgroup.rds")
 

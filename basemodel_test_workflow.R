@@ -12,7 +12,8 @@ setwd("~/Github/AI_surveillance")
 source("define_models.r")
 
 #read in data
-setwd("~/Github")
+# setwd("~/Github")
+setwd("~/HP/Data")
 data <- readRDS('samplingevent_n_y_speciesgroup.rds')
 
 #change month and year columns to numerics
@@ -172,6 +173,53 @@ base.dandd.mod.fit <- coda.samples(model = base.dandd.mod, variable.names = vari
 saveRDS(base.dandd.mod.fit, "base_dand_fit.rds")
 
 ###############################################################################################
+#reformat data for tests 4 and 5
+###############################################################################################
+#read in data
+# setwd("~/Github")
+setwd("~/HP/Data")
+data <- readRDS('locationsamplingevent_n_y_speciesgroup.rds')
+
+#change month and year columns to numerics
+data$month <- as.numeric(data$month)
+data$year <- as.numeric(as.character(data$year))
+
+#add a hucid column
+temp <- data.frame(watershed = (unique(data$watershed)))
+temp$hucid <- seq(1, length(temp[,1]))
+data$hucid <- temp$hucid[match(data$watershed, temp$watershed)]
+
+#add a yearid column
+temp <- data.frame(year = unique(data$year))
+temp$yearid <- seq(1, length(temp[,1]))
+data$yearid <- temp$yearid[match(data$year, temp$year)]
+
+#change month column to integers
+data$month <- as.integer(data$month)
+
+#define variables
+nsamplingevents <- length(unique(data$sample.event)) #12787
+nspecies <- length(unique(data$species.group)) #7
+nmonths <- length(seq(1, 12)) #12
+nyears <- length(unique(data$year)) #5
+nhucs <- length(unique(data$watershed)) #195
+
+y <- matrix(NA, nrow = nsamplingevents, ncol = nspecies)
+for (s in 1:nsamplingevents) {
+  for (l in 1:nspecies){
+    if(length( data$y[data$sample.event == s & data$species.group == l]) >0 ){
+      y[s, l] <- data$y[data$sample.event == s & data$species.group == l]}
+  }
+}
+
+n <- matrix(NA, nrow = nsamplingevents, ncol = nspecies)
+for (s in 1:nsamplingevents) {
+  for (l in 1:nspecies){
+    if(length(data$n[data$sample.event == s & data$species.group == l]) >0 ){
+      n[s, l] <- data$n[data$sample.event == s & data$species.group == l]}
+  }
+}
+###############################################################################################
 #test 4
 #run base model with sampling events defined by location name; all species
 ###############################################################################################
@@ -186,6 +234,7 @@ variable.names = c("Se", "Sp", "pi")
 setwd("~/Github/AI_surveillance")
 base.location.mod <- jags.model(file = "base_sampling_events.txt", data = jags.data, 
                              n.chains = 3, n.adapt=nadapt)
+
 base.location.mod.fit <- coda.samples(model = base.location.mod, variable.names = variable.names, 
                                    n.iter=niter, thin=thin)
 base.location.mod.burnin <- window(base.location.mod.fit, start = (nadapt+50))
