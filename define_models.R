@@ -43,37 +43,37 @@ cat("model {
 sink()
 
 sink("base_sampling_events.txt")
-cat("model {
-    #likelihood (i = month, j = year, k = huc, l = species, s = sampling events)
-    for (l in 1:nspecies){
-        for (s in 1:nsamplingevents) {
-            p[s, l] <- (Se[l] * lambda[s, l]) + ((1-Sp[l]) * (1-lambda[s, l]))
-            y[s, l] ~ dbin(p[s, l], n[s, l])
-            lambda[s, l] ~ dbeta(alpha[month[s], year[s], huc[s], l], beta[month[s], year[s], huc[s], l])T(0.001,0.999)
-        }
-    }
-    
-    # Hierarchial step for lambda 
-    for (l in 1:nspecies) {
-        for (i in 1:nmonths) {
-            for (j in 1:nyears) {
-                for (k in 1:nhucs) {
-                    alpha[i, j, k, l] <- pi[i, j, k, l] * scale[i, j, k, l]
-                    beta[i, j, k, l] <- (1 - pi[i, j, k, l]) * scale[i, j, k, l]
-                    pi[i, j, k, l] ~ dbeta(1, 1)
-                    scale[i, j, k, l] ~ dpar(1.5, 1)
-                }
-            }
-        }
-    }
-    
-    #priors for Se/Sp
-    for (l in 1:nspecies) {
-        Se[l] ~ dbeta(20.833, 4.148)
-        Sp[l] ~ dbeta(8.403, 1.001)
-    }
-    }", fill = TRUE)
-sink()
+  cat("model {
+      #likelihood (i = month, j = year, k = huc, l = species, s = sampling events)
+      for (l in 1:nspecies){
+          for (s in 1:nsamplingevents) {
+              p[s, l] <- (Se[l] * lambda[s, l]) + ((1-Sp[l]) * (1-lambda[s, l]))
+              y[s, l] ~ dbin(p[s, l], n[s, l])
+              lambda[s, l] ~ dbeta(alpha[month[s], year[s], huc[s], l], beta[month[s], year[s], huc[s], l])T(0.001,0.999)
+          }
+      }
+      
+      # Hierarchial step for lambda 
+      for (l in 1:nspecies) {
+          for (i in 1:nmonths) {
+              for (j in 1:nyears) {
+                  for (k in 1:nhucs) {
+                      alpha[i, j, k, l] <- pi[i, j, k, l] * scale[i, j, k, l]
+                      beta[i, j, k, l] <- (1 - pi[i, j, k, l]) * scale[i, j, k, l]
+                      pi[i, j, k, l] ~ dbeta(1, 1)
+                      scale[i, j, k, l] ~ dpar(1.5, 1)
+                  }
+              }
+          }
+      }
+      
+      #priors for Se/Sp
+      for (l in 1:nspecies) {
+          Se[l] ~ dbeta(20.833, 4.148)
+          Sp[l] ~ dbeta(8.403, 1.001)
+      }
+      }", fill = TRUE)
+  sink()
 
 # icar model - with sampling events
 

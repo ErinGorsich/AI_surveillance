@@ -154,7 +154,7 @@ cl <- makePSOCKcluster(nchains)
 parJagsModel(cl=cl, name="queens.adapt", 
              file = "~/Github/AI_surveillance/icar_sampling_events.txt",
              data = jags.data, n.chains=nchains, n.adapt=nadapt)
-parUpdate(cl=cl, model="queens.adapt", n.iter=nburn)
+parUpdate(cl=cl, object="queens.adapt", n.iter=nburn)
 queens.mod.fit <- parCodaSamples(cl=cl, model="queens.adapt", variable.names=variable.names,
                                    n.iter=niter, thin=thin)
 saveRDS(queens.mod.fit, "~/Github/queens_icar_fit.rds")
