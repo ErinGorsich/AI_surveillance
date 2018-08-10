@@ -89,7 +89,7 @@ ngeese.sp.min <- quantile(fit.network[,6])[1]
 plot.se <- data.frame(species = seq(1,3), 
                       minimum.base = c(bdabbling.se.min, bdiving.se.min, bgeese.se.min),
                       minimum.queens = c(qdabbling.se.min, qdiving.se.min, qgeese.se.min),
-                      minimum.netowrk = c(ndabbling.se.min, ndiving.se.min, ngeese.se.min),
+                      minimum.network = c(ndabbling.se.min, ndiving.se.min, ngeese.se.min),
                       median.base = c(bdabbling.se.median, bdiving.se.median, bgeese.se.median),
                       median.queens = c(qdabbling.se.median, qdiving.se.median, qgeese.se.median),
                       median.network = c(ndabbling.se.median, ndiving.se.median, ngeese.se.median),
@@ -107,7 +107,10 @@ plot.sp <- data.frame(species = seq(1,3),
                       ninetyfifth.queens = c(qdabbling.sp.95, qdabbling.sp.95, qgeese.sp.95),
                       ninetyfifth.network  = c(ndabbling.sp.95, ndabbling.sp.95, ngeese.sp.95))
 
-jpeg("~/Honors Thesis/Thesis Work/Figures/sensitivityplot.jpeg")
+breaks <- seq(0,1, 0.1)
+
+setwd("~/HP/Figures")
+jpeg("sensitivityplot.jpeg")
 ggplot(data = plot.se) +
   geom_point(aes(x = median.base, y = species), color = "darkblue") +
   geom_errorbarh(aes(x = median.base, y = species, xmin = minimum.base, xmax = ninetyfifth.base), 
@@ -115,28 +118,30 @@ ggplot(data = plot.se) +
   geom_point(aes(x = median.queens, y = species), color = "skyblue") +
   geom_errorbarh(aes(x = median.queens, y = species, xmin = minimum.queens, xmax = ninetyfifth.queens),
                  height = .1, color = "skyblue") +
-  geom_point(aes(x = median.network, y = species), color = "lightblue") +
+  geom_point(aes(x = median.network, y = species), color = "cornflowerblue") +
   geom_errorbarh(aes(x = median.network, y = species, xmin = minimum.network, xmax = ninetyfifth.network),
-                 height = .1, color = "lightblue") +
+                 height = .1, color = "cornflowerblue") +
   ylab("Species Group") +
   xlab("Estimated Diagnostic Test Sensitivity") +
   scale_x_continuous(breaks = breaks, limits = c(0, 0.7)) +
+  scale_y_continuous(breaks = c(1, 2, 3), labels = c("1", "2", "3")) +
   theme(panel.background=element_blank(), axis.ticks = element_line(), axis.line = element_line())
 dev.off()
 
-jpeg("~/Honors Thesis/Thesis Work/Figures/specificityplot.jpeg")
+jpeg("specificityplot.jpeg")
 ggplot(data = plot.sp) +
   geom_point(aes(x = median.base, y = species), color = "darkblue") +
   geom_errorbarh(aes(x = median.base, y = species, xmin = minimum.base, xmax = ninetyfifth.base), 
                  height = .1, color = 'darkblue') +
   geom_point(aes(x = median.queens, y = species), color = "skyblue") +
-  geom_errorbarh(aes(x = median.queens. y = species, xmin = minimum.queens, xmax = ninetyfifth.queens),
+  geom_errorbarh(aes(x = median.queens, y = species, xmin = minimum.queens, xmax = ninetyfifth.queens),
                  height = .1, color = "skyblue") +
-  geom_point(aes(x = median.network, y = species), color = "lightblue") +
+  geom_point(aes(x = median.network, y = species), color = "cornflowerblue") +
   geom_errorbarh(aes(x = median.network, y = species, xmin = minimum.network, xmax = ninetyfifth.network),
-                 height = .1, color = "lightblue") +
+                 height = .1, color = "cornflowerblue") +
   ylab("Species Group") +
   xlab("Estimated Diagnostic Test Specificity") +
   scale_x_continuous(breaks = breaks, limits = c(0.9, 1)) +
+  scale_y_continuous(breaks = c(1, 2, 3), labels = c("1", "2", "3")) +
   theme(panel.background=element_blank(), axis.ticks = element_line(), axis.line = element_line())
 dev.off()

@@ -16,7 +16,7 @@ source("define_neighborhood.r")
 
 #read in data
 setwd("~/Github")
-data <- readRDS("samplingevent_n_y_speciesgroup.rds")
+data <- readRDS("locationsamplingevent_n_y_speciesgroup.rds")
 
 #read in sampling data
 data$month <- as.numeric(data$month)

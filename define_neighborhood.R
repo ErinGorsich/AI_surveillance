@@ -26,7 +26,7 @@ names <- huc4@data$HUC4
 #t <- t[!is.na(t$d.huc4), ]
 
 # update based on bird movement data
-setwd("~/HP/Data")
+setwd("~/HP")
 # if (!Erin){
 # setwd("~/Github")
 # }

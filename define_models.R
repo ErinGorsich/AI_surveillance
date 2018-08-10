@@ -42,6 +42,7 @@ cat("model {
     }", fill = TRUE)
 sink()
 
+setwd("~/Github/AI_surveillance")
 sink("base_sampling_events.txt")
   cat("model {
       #likelihood (i = month, j = year, k = huc, l = species, s = sampling events)
