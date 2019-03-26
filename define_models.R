@@ -42,7 +42,7 @@ cat("model {
     }", fill = TRUE)
 sink()
 
-setwd("~/Github/AI_surveillance")
+#setwd("~/Github/AI_surveillance")
 sink("base_sampling_events.txt")
   cat("model {
       #likelihood (i = month, j = year, k = huc, l = species, s = sampling events)
@@ -78,7 +78,7 @@ sink("base_sampling_events.txt")
 
 # icar model - with sampling events
 
-setwd("~/Github/AI_surveillance")
+#setwd("~/Github/AI_surveillance")
 sink("icar_sampling_events.txt")
 cat("model {
     #likelihood (i = month, j = year, k = huc, l = species, s = sampling events)
@@ -148,7 +148,7 @@ sink()
 
 #ar1 model - with sampling events and constant correlation
 
-setwd("~/GitHub/AI_surveillance")
+# setwd("~/GitHub/AI_surveillance")
 
 sink("ar1_sampling_events.txt")
 cat("model {
@@ -162,7 +162,7 @@ cat("model {
     }
     # Hierarchial step for lambda 
     for (l in 1:nspecies) {
-      for (i in 1:nmonths) {
+      for (i in 1:nmonths) { 
         for (j in 1:nyears) {
           for (k in 1:nhucs) {
             alpha[i, j, k, l] <- pi[i, j, k, l] * scale[i, j, k, l]
@@ -219,7 +219,7 @@ cat("model{
         }
     }
     #priors
-    Se ~ dbemonth[s], year[s], huc[s],ta(20.833,4.148)
+    Se ~ dbeta(20.833,4.148)
     Sp ~ dbeta(8.403,1.001)
     for(i in 1:nmonths) {
         for(t in 1:nyears) {
@@ -353,7 +353,7 @@ sink()
 
 # See notes on priors in Chapter 5 of Gelman et al. BDA, and 
 # http://andrewgelman.com/2009/10/21/some_practical/
-setwd("~/Github/AI_surveillance")
+# setwd("~/Github/AI_surveillance")
 sink("base_sampling_events.txt")
 cat("model {
     #likelihood (i = month, j = year, k = huc, l = species, s = sampling events)
@@ -392,7 +392,7 @@ sink()
 
 # icar model - with sampling events
 
-setwd("~/Github/AI_surveillance")
+# setwd("~/Github/AI_surveillance")
 sink("icar_sampling_events.txt")
 cat("model {
     #likelihood (i = month, j = year, k = huc, l = species, s = sampling events)
@@ -467,7 +467,7 @@ cat("model{
         }
     }
     #priors
-    Se ~ dbemonth[s], year[s], huc[s],ta(20.833,4.148)
+    Se ~ dbeta(20.833,4.148)
     Sp ~ dbeta(8.403,1.001)
     for(i in 1:nmonths) {
         for(t in 1:nyears) {

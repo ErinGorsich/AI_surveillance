@@ -7,7 +7,7 @@ library(raster)
 library(geosphere)
 
 # need hucs in global environment; needs network in global environment
-setwd("~/HP/hydrologic_units")
+setwd("/home/webblab/Documents/HP/hydrologic_units")
 huc4 <- shapefile('huc4.shp')
 
 # HP - delete me - if read in works ok                  
@@ -26,7 +26,7 @@ names <- huc4@data$HUC4
 #t <- t[!is.na(t$d.huc4), ]
 
 # update based on bird movement data
-setwd("~/HP")
+setwd("/home/webblab/Documents/HP")
 # if (!Erin){
 # setwd("~/Github")
 # }
