@@ -1,9 +1,9 @@
-setwd('~/Honors Thesis/Thesis Work/Model Selection')
+setwd('/home/webblab/Documents/Github/AI_surveillance')
 
 # load models
 source('define_models.R')
 source('define_neighborhood.R')
-source('model selection function.R')
+# source('model selection function.R')
 
 #packages
 library(rjags)
@@ -18,8 +18,8 @@ library(coda)
 # nmonths <- dim(y)[1]
 
 #read in n and y matrices with the data from all hucs
-n <- readRDS("~/Honors Thesis/SP19/simulated_n_matrix.rds")
-y <- readRDS("~/Honors Thesis/SP19/simulated_y_matrix.rds")
+n <- readRDS("data_n_mall_all.rds")
+y <- readRDS("data_y_mall_all.rds")
 
 #define nsites to match new y matrix
 nsites <- dim(y)[3]
@@ -35,26 +35,26 @@ jags.inits <- function(){
        "pi" = array(runif(nsites*nmonths*nyears), dim = c(nmonths, nyears, nsites)))
 }
 variable.names = c('Se', 'Sp', 'pi')
-nadapt = 30000
+nadapt = 100000
 niter = 50000
 thin = 10
-setwd("~/Honors Thesis/Thesis Work/Model Selection")
+setwd("/home/webblab/Documents/Github/AI_surveillance")
 base.mod <- jags.model(file = "constant_sensitivity.txt", data=jags.data, inits=jags.inits,
                       n.chains=3, n.adapt = nadapt)
 base.mod.fit <- coda.samples(model=base.mod, variable.names = variable.names,
                             n.iter=niter, thin=thin)
 
-setwd("~/Honors Thesis/SP19/Model Testing")
-pdf(paste(name, "_trace_density_sensitivity_specificity.pdf", sep=""))
-plot(mod.fit[,1:2])
+setwd("/home/webblab/Documents/HP/simulated_results")
+pdf("base_trace_density_sensitivity_specificity_mall.pdf")
+plot(base.mod.fit[,1:2])
 dev.off()
 
-pdf(paste(name, "_sensitivity_autocorrelation.pdf", sep=""))
-autocorr.plot(mod.fit[,'Se'], main="Sensitivity Autocorrelation")
+pdf("base_sensitivity_autocorrelation_mall.pdf")
+autocorr.plot(base.mod.fit[,'Se'], main="Sensitivity Autocorrelation")
 dev.off() 
 
-pdf(paste(name, "_specificity_autocorrelation.pdf", sep=""))
-autocorr.plot(mod.fit[, 'Sp'], main="Specificity Autocorrelation")
+pdf("base_specificity_autocorrelation_mall.pdf")
+autocorr.plot(base.mod.fit[, 'Sp'], main="Specificity Autocorrelation")
 dev.off()
 
 #define data for running the AR1 model, no W matrix
