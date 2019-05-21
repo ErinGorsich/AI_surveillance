@@ -18,8 +18,8 @@ library(coda)
 # nmonths <- dim(y)[1]
 
 #read in n and y matrices with the data from all hucs
-n <- readRDS("simulated_n_matrix.rds")
-y <- readRDS("simulated_y_matrix.rds")
+n <- readRDS("data_n_mall_all.rds")
+y <- readRDS("data_y_mall_all.rds")
 
 #define nsites to match new y matrix
 nsites <- dim(y)[3]
@@ -37,7 +37,7 @@ jags.inits <- function(){
 variable.names = c('Se', 'Sp', 'pi')
 nadapt = 100000
 niter = 50000
-thin = 5
+thin = 10
 setwd("/home/webblab/Documents/Github/AI_surveillance")
 base.mod <- jags.model(file = "constant_sensitivity.txt", data=jags.data, inits=jags.inits,
                       n.chains=3, n.adapt = nadapt)
@@ -45,15 +45,15 @@ base.mod.fit <- coda.samples(model=base.mod, variable.names = variable.names,
                             n.iter=niter, thin=thin)
 
 setwd("/home/webblab/Documents/HP/simulated_results")
-pdf("base_trace_density_sensitivity_specificity.pdf")
+pdf("base_trace_density_sensitivity_specificity_mall.pdf")
 plot(base.mod.fit[,1:2])
 dev.off()
 
-pdf("base_sensitivity_autocorrelation.pdf")
+pdf("base_sensitivity_autocorrelation_mall.pdf")
 autocorr.plot(base.mod.fit[,'Se'], main="Sensitivity Autocorrelation")
 dev.off() 
 
-pdf("base_specificity_autocorrelation.pdf")
+pdf("base_specificity_autocorrelation_mall.pdf")
 autocorr.plot(base.mod.fit[, 'Sp'], main="Specificity Autocorrelation")
 dev.off()
 
