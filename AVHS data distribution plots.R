@@ -334,3 +334,37 @@ real.geese.apparent.plot <- ggplot(apparent.diving, aes(x=month, y = mean)) +
 jpeg('/home/webblab/Documents/HP/distribution_plots/real_anserinae_appprev.jpeg')
   real.geese.apparent.plot
 dev.off()
+
+#####################################################################################
+#number of samples by huc and species group
+#####################################################################################
+
+nhuc <- length(unique(ai$huc))
+
+real.spatial <- matrix(nrow = 3, ncol = nhuc)
+for (i in 1:3) {
+  for (j in 1:nhuc) {
+    spatial[i,j] <- sum(tally$total[tally$species.group == i & tally$huc == j])
+  }
+}
+
+real.samples.huc <- data.frame(species.group = as.factor(rep(seq(1,3), each = nhuc)),
+                               huc = seq(1, nhuc), samples = NA)
+for (i in 1:3) {
+  for (j in 1:nhuc) {
+    real.samples.huc$samples[real.samples.huc$species.group == i & 
+                               real.samples.huc$huc == j] <- spatial[i,j]
+  }
+}
+
+real.samples.plot <- ggplot(real.samples.huc, aes(x = huc, y = samples, 
+                                                  fill = species.group)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  theme_minimal() +
+  scale_fill_manual(values = c("deepskyblue4", "deeppink4", "mediumpurple4")) +
+  facet_grid(. ~ species.group) +
+  ggtitle("Total Number of Samples by Huc (Actual Data)")
+
+jpeg('home/webblab/Documents/HP/distribution_plots/real_totalsample.jpeg')
+  real.samples.plot
+dev.off()

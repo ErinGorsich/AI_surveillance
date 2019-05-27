@@ -273,3 +273,40 @@ geese.apparent.plot <- ggplot(apparent.geese, aes(x=month, y = mean)) +
 jpeg('/home/webblab/Documents/HP/distribution_plots/simulated_anserinae_appprev.jpeg')
   geese.apparent.plot
 dev.off()
+
+#####################################################################################
+#number of samples by huc
+#####################################################################################
+
+nhuc <- 222
+
+spatial <- matrix(nrow = 3, ncol = nhuc)
+for (i in 1:3) {
+  for (j in 1:nhuc) {
+    spatial [i, j] <- sum(simulated$total[simulated$species.group == i & 
+                                            simulated$huc == j])
+  }
+}
+
+samples.huc <- data.frame(species.group = as.factor(rep(seq(1,3), each = nhuc)),
+                          huc = seq(1,nhuc), samples = NA)
+
+for (i in 1:3) {
+  for (j in 1:nhuc) {
+    samples.huc$samples[samples.huc$species.group == i & samples.huc$huc == j] <-
+      spatial[i, j]
+  }
+} 
+
+palette <- brewer.pal(3, "YlGnBu")
+
+samples.plot <- ggplot(samples.huc, aes(x=huc, y=samples, fill = species.group)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  theme_minimal() +
+  scale_fill_manual(values = palette) +
+  facet_grid(. ~ species.group) +
+  ggtitle("Total Number of Samples by Huc")
+
+jpeg('home/webblab/Documents/HP/distribution_plots/simulated_totalsamples.jpeg')
+  samples.plot
+dev.off()
