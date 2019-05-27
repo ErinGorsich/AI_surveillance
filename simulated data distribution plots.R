@@ -7,7 +7,7 @@ library(ggplot2)
 library(RColorBrewer)
 library(gridExtra)
 
-simulated <- readRDS("~/Honors Thesis/SP19/simulated_data.rds")
+simulated <- readRDS("/home/webblab/Documents/HP/simulated_data.rds")
 
 #break down data by species group
 sim.mall <- simulated[simulated$species.group == 1, ]
@@ -41,11 +41,12 @@ mall.plot <- ggplot(total.mall, aes(x=year, y = total, fill = month)) +
   geom_bar(stat = "identity", position = "dodge")+
   theme_minimal() +
   scale_fill_manual(values = palette) +
+  ylim(0, 10000) +
   ggtitle("Total Number of Dabbling Duck Samples by Month")
 
-# jpeg()
-#   mall.plot
-# dev.off()
+jpeg('/home/webblab/Documents/HP/distribution_plots/simulated_dabbling_samplenumber.jpeg')
+  mall.plot
+dev.off()
   
 ###################################################################################
 #plot distribution of Diving Ducks data by month and year
@@ -72,11 +73,12 @@ diving.plot <- ggplot(total.diving, aes(x=year, y = total, fill = month)) +
   geom_bar(stat = "identity", position = "dodge")+
   theme_minimal() +
   scale_fill_manual(values = palette) +
+  ylim(0, 1000) +
   ggtitle("Total Number of Diving Duck Samples by Month")
 
-# jpeg()
-#   sea.plot
-# dev.off
+jpeg('/home/webblab/Documents/HP/distribution_plots/simulated_diving_samplenumber.jpeg')
+  diving.plot
+dev.off()
 
 ###################################################################################
 #plot distribution of Anserinae data by month and year
@@ -103,11 +105,12 @@ geese.plot <- ggplot(total.geese, aes(x=year, y = total, fill = month)) +
   geom_bar(stat = "identity", position = "dodge")+
   theme_minimal() +
   scale_fill_manual(values = palette) +
+  ylim(0, 3500) +
   ggtitle("Total Number of Anserinae Samples by Month")
 
-# jpeg()
-#   mall.plot
-# dev.off
+jpeg('/home/webblab/Documents/HP/distribution_plots/simulated_anserinae_samplenumber.jpeg')
+  geese.plot
+dev.off()
 
 ##################################################################################
 #plot apparent prevalence distribution by month and year
@@ -159,9 +162,9 @@ mall.apparent.plot <- ggplot(apparent.mall, aes(x=month, y = mean)) +
   ylim(0, 0.3) +
   ggtitle("Dabbling Duck Mean Apparent Prevalence")
   
-# jpeg()
-#   mall.apparent.plot
-# dev.off
+jpeg('/home/webblab/Documents/HP/distribution_plots/simulated_dabbling_appprev.jpeg')
+  mall.apparent.plot
+dev.off()
 
 ##################################################################################
 #plot apparent prevalence distribution by month and year
@@ -213,9 +216,9 @@ diving.apparent.plot <- ggplot(apparent.diving, aes(x=month, y = mean)) +
   ylim(0, 0.3) +
   ggtitle("Diving Duck Mean Apparent Prevalence")
 
-# jpeg()
-#   diving.apparent.plot
-# dev.off
+jpeg('/home/webblab/Documents/HP/distribution_plots/simulated_diving_appprev.jpeg')
+  diving.apparent.plot
+dev.off()
 
 ##################################################################################
 #plot apparent prevalence distribution by month and year
@@ -267,6 +270,6 @@ geese.apparent.plot <- ggplot(apparent.geese, aes(x=month, y = mean)) +
   ylim(0, 0.3) +
   ggtitle("Anserinae Mean Apparent Prevalence")
 
-# jpeg()
-#   geese.apparent.plot
-# dev.off
+jpeg('/home/webblab/Documents/HP/distribution_plots/simulated_anserinae_appprev.jpeg')
+  geese.apparent.plot
+dev.off()
