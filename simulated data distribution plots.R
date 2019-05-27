@@ -214,7 +214,7 @@ diving.apparent.plot <- ggplot(apparent.diving, aes(x=month, y = mean)) +
   ggtitle("Diving Duck Mean Apparent Prevalence")
 
 # jpeg()
-#   mall.apparent.plot
+#   diving.apparent.plot
 # dev.off
 
 ##################################################################################
@@ -268,5 +268,5 @@ geese.apparent.plot <- ggplot(apparent.geese, aes(x=month, y = mean)) +
   ggtitle("Anserinae Mean Apparent Prevalence")
 
 # jpeg()
-#   mall.apparent.plot
+#   geese.apparent.plot
 # dev.off

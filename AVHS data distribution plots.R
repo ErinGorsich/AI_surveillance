@@ -3,6 +3,7 @@
 #Check distribution of actual data across watersheds
 ###################################################################################
 ###################################################################################
+library(dplyr)
 library(ggplot2)
 library(RColorBrewer)
 library(gridExtra)
@@ -43,6 +44,7 @@ tally <- data.frame(species.group = as.factor(rep(seq(1,3), each = 60*222)),
                     total = NA, positive = NA, apparent.prev = NA)
 
 total <- ai %>% group_by (species.group, huc, month, year.number)
+total$month <- as.numeric(total$month)
 for (i in 1:3) {
   for (j in 1:222) {
     for (k in 1:5) {
@@ -59,6 +61,9 @@ for (i in 1:3) {
     }
   }
 }
+
+tally$apparent.prev <- tally$positive/tally$total
+tally$apparent.prev[tally$apparent.prev == "NaN"] <- 0
 
 real.mall <- ai[ai$species.group == 1, ]
 real.diving <- ai[ai$species.group ==2, ]
@@ -164,3 +169,165 @@ real.geese.plot <- ggplot(total.geese, aes(x=year, y = total, fill = month)) +
 # jpeg()
 #   real.geese.plot
 # dev.off()
+
+######################################################################################
+#plot apparent prevalence of dabbling duck data by month and year
+##################################################################################
+
+tally.mall <- tally[tally$species.group == 1, ]
+
+mean.apparent <- matrix(nrow = 5, ncol = 12)
+sd.apparent <- matrix(nrow = 5, ncol = 12)
+for (i in 1:5) {
+  for (j in 1:12) {
+    hold <- tally.mall$apparent.prev[tally.mall$year == i & tally.mall$month == j]
+    mean.apparent[i, j] <- quantile(hold, probs = 0.5)
+    sd.apparent[i, j] <- sd(hold)
+  }
+}
+
+apparent.mall <- data.frame(year = as.factor(rep(seq(1,5), each = 12)), 
+                            month = as.factor(rep(seq(1, 12), times = 5)),
+                            mean = NA, stand.dev = NA, ymin = NA, ymax = NA)
+for (i in 1:5) {
+  for (j in 1:12) {
+    apparent.mall$mean[apparent.mall$year == i & apparent.mall$month == j] <-
+      mean.apparent[i, j]
+    apparent.mall$stand.dev[apparent.mall$year == i & apparent.mall$month == j] <-
+      sd.apparent[i, j]
+    apparent.mall$ymin[apparent.mall$year == i & apparent.mall$month == j] <-
+      (mean.apparent[i, j] - sd.apparent[i,j])
+    apparent.mall$ymax[apparent.mall$year == i & apparent.mall$month == j] <-
+      (mean.apparent[i, j] + sd.apparent[i, j])
+  }
+}
+for (i in 1:5) {
+  for (j in 1:12) {
+    if (apparent.mall$ymin[apparent.mall$year == i & apparent.mall$month == j] < 0) {
+      apparent.mall$ymin[apparent.mall$year == i & apparent.mall$month == j] <- 0
+    } else {
+      apparent.mall$ymin[apparent.mall$year == i & apparent.mall$month == j] <-
+        apparent.mall$ymin[apparent.mall$year == i & apparent.mall$month == j]
+    }
+  }
+}
+
+real.mall.apparent.plot <- ggplot(apparent.mall, aes(x=month, y = mean)) +
+  geom_point(color = "darkred") +
+  geom_errorbar(aes( ymin = ymin, ymax = ymax), color = "darkred") +
+  facet_grid(. ~ year) +
+  theme_minimal() +
+  ylim(0, 0.3) +
+  ggtitle("Dabbling Duck Mean Apparent Prevalence (Actual Data)")
+
+# jpeg()
+#   real.mall.apparent.plot
+# dev.off
+
+######################################################################################
+#plot apparent prevalence of diving duck data by month and year
+##################################################################################
+
+tally.diving <- tally[tally$species.group == 2, ]
+
+mean.apparent <- matrix(nrow = 5, ncol = 12)
+sd.apparent <- matrix(nrow = 5, ncol = 12)
+for (i in 1:5) {
+  for (j in 1:12) {
+    hold <- tally.diving$apparent.prev[tally.diving$year == i & tally.diving$month == j]
+    mean.apparent[i, j] <- quantile(hold, probs = 0.5)
+    sd.apparent[i, j] <- sd(hold)
+  }
+}
+
+apparent.diving <- data.frame(year = as.factor(rep(seq(1,5), each = 12)), 
+                            month = as.factor(rep(seq(1, 12), times = 5)),
+                            mean = NA, stand.dev = NA, ymin = NA, ymax = NA)
+for (i in 1:5) {
+  for (j in 1:12) {
+    apparent.diving$mean[apparent.diving$year == i & apparent.diving$month == j] <-
+      mean.apparent[i, j]
+    apparent.diving$stand.dev[apparent.diving$year == i & apparent.diving$month == j] <-
+      sd.apparent[i, j]
+    apparent.diving$ymin[apparent.diving$year == i & apparent.diving$month == j] <-
+      (mean.apparent[i, j] - sd.apparent[i,j])
+    apparent.diving$ymax[apparent.diving$year == i & apparent.diving$month == j] <-
+      (mean.apparent[i, j] + sd.apparent[i, j])
+  }
+}
+for (i in 1:5) {
+  for (j in 1:12) {
+    if (apparent.diving$ymin[apparent.diving$year == i & apparent.diving$month == j] < 0) {
+      apparent.diving$ymin[apparent.diving$year == i & apparent.diving$month == j] <- 0
+    } else {
+      apparent.diving$ymin[apparent.diving$year == i & apparent.diving$month == j] <-
+        apparent.diving$ymin[apparent.diving$year == i & apparent.diving$month == j]
+    }
+  }
+}
+
+real.diving.apparent.plot <- ggplot(apparent.diving, aes(x=month, y = mean)) +
+  geom_point(color = "darkred") +
+  geom_errorbar(aes( ymin = ymin, ymax = ymax), color = "darkred") +
+  facet_grid(. ~ year) +
+  theme_minimal() +
+  ylim(0, 0.3) +
+  ggtitle("Diving Duck Mean Apparent Prevalence (Actual Data)")
+
+# jpeg()
+#   real.mall.apparent.plot
+# dev.off
+
+######################################################################################
+#plot apparent prevalence of Anserinae data by month and year
+##################################################################################
+
+tally.geese <- tally[tally$species.group == 3, ]
+
+mean.apparent <- matrix(nrow = 5, ncol = 12)
+sd.apparent <- matrix(nrow = 5, ncol = 12)
+for (i in 1:5) {
+  for (j in 1:12) {
+    hold <- tally.geese$apparent.prev[tally.geese$year == i & tally.geese$month == j]
+    mean.apparent[i, j] <- quantile(hold, probs = 0.5)
+    sd.apparent[i, j] <- sd(hold)
+  }
+}
+
+apparent.geese <- data.frame(year = as.factor(rep(seq(1,5), each = 12)), 
+                              month = as.factor(rep(seq(1, 12), times = 5)),
+                              mean = NA, stand.dev = NA, ymin = NA, ymax = NA)
+for (i in 1:5) {
+  for (j in 1:12) {
+    apparent.geese$mean[apparent.geese$year == i & apparent.geese$month == j] <-
+      mean.apparent[i, j]
+    apparent.geese$stand.dev[apparent.geese$year == i & apparent.geese$month == j] <-
+      sd.apparent[i, j]
+    apparent.geese$ymin[apparent.geese$year == i & apparent.geese$month == j] <-
+      (mean.apparent[i, j] - sd.apparent[i,j])
+    apparent.geese$ymax[apparent.geese$year == i & apparent.geese$month == j] <-
+      (mean.apparent[i, j] + sd.apparent[i, j])
+  }
+}
+for (i in 1:5) {
+  for (j in 1:12) {
+    if (apparent.geese$ymin[apparent.geese$year == i & apparent.geese$month == j] < 0) {
+      apparent.geese$ymin[apparent.geese$year == i & apparent.geese$month == j] <- 0
+    } else {
+      apparent.geese$ymin[apparent.geese$year == i & apparent.geese$month == j] <-
+        apparent.geese$ymin[apparent.geese$year == i & apparent.geese$month == j]
+    }
+  }
+}
+
+real.geese.apparent.plot <- ggplot(apparent.diving, aes(x=month, y = mean)) +
+  geom_point(color = "darkred") +
+  geom_errorbar(aes( ymin = ymin, ymax = ymax), color = "darkred") +
+  facet_grid(. ~ year) +
+  theme_minimal() +
+  ylim(0, 0.3) +
+  ggtitle("Anserinae Mean Apparent Prevalence (Actual Data)")
+
+# jpeg()
+#   real.mall.apparent.plot
+# dev.off
