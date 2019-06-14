@@ -5,7 +5,7 @@
 ############################################################################################
 ############################################################################################
 
-data <- readRDS("~/Github/locationsamplingevent_n_y_speciesgroup.rds")
+data <- readRDS("/home/webblab/Documents/HP/locationsamplingevent_n_y_speciesgroup.rds")
 
 data <- data[data$species.group %in% c(1,2,4), ]
 for (i in 1:length(data$species.group)) {
@@ -104,13 +104,13 @@ for (i in 1:nmonths){
     }
   }
 }
-Se <- rbeta(nmonths*nyears*nhucs, 20.833, 4.148)
-Sp <- rbeta(nmonths*nyears*nhucs, 8.403, 1.001)
-Se <- mean(Se)
-Sp <- mean(Sp)
-#Sp=0.8952586, Se=0.8329987
+# Se <- rbeta(nmonths*nyears*nhucs, 20.833, 4.148)
+# Sp <- rbeta(nmonths*nyears*nhucs, 8.403, 1.001)
+# Se <- mean(Se)
+# Sp <- mean(Sp)
+# #Sp=0.8941578, Se=0.8340683
 
-simulated <- base.model(n=n, lambda=lambda, Se=Se, Sp=Sp)
+simulated <- base.model(n=n, lambda=lambda)
 
 saveRDS(simulated, "/home/webblab/Documents/HP/sim_data_attempt6.rds")
 saveRDS(n, "/home/webblab/Documents/HP/sim_data_6_n.rds")
