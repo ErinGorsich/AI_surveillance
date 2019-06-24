@@ -365,6 +365,6 @@ real.samples.plot <- ggplot(real.samples.huc, aes(x = huc, y = samples,
   facet_grid(. ~ species.group) +
   ggtitle("Total Number of Samples by Huc (Actual Data)")
 
-jpeg('home/webblab/Documents/HP/distribution_plots/real_totalsample.jpeg')
+jpeg('/home/webblab/Documents/HP/distribution_plots/real_totalsample.jpeg')
   real.samples.plot
 dev.off()

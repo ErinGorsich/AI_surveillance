@@ -7,8 +7,17 @@ library(ggplot2)
 library(RColorBrewer)
 library(gridExtra)
 
-simulated <- readRDS("/home/webblab/Documents/HP/simulated_data.rds")
+simulated <- readRDS("/home/webblab/Documents/HP/sim_data_2.rds")
 
+attempt <- 2
+if (attempt == 2) {
+  simulated$total <- simulated$total.samples
+  simulated$positive <- simulated$sim.pos
+  simulated$apparent.prevalance <- simulated$sim.app.prev
+  simulated$apparent.prevalance[is.na(simulated$apparent.prevalance)] <- 0
+} else {
+  simulated <- simulated
+}
 #break down data by species group
 sim.mall <- simulated[simulated$species.group == 1, ]
 sim.diving <- simulated[simulated$species.group == 2, ]
@@ -298,7 +307,8 @@ for (i in 1:3) {
   }
 } 
 
-palette <- brewer.pal(3, "YlGnBu")
+palette <- brewer.pal(9, "YlGnBu")
+palette <- c(palette[4], palette[6], palette[8])
 
 samples.plot <- ggplot(samples.huc, aes(x=huc, y=samples, fill = species.group)) +
   geom_bar(stat = "identity", position = "dodge") +
@@ -307,6 +317,6 @@ samples.plot <- ggplot(samples.huc, aes(x=huc, y=samples, fill = species.group))
   facet_grid(. ~ species.group) +
   ggtitle("Total Number of Samples by Huc")
 
-jpeg('home/webblab/Documents/HP/distribution_plots/simulated_totalsamples.jpeg')
+jpeg('/home/webblab/Documents/HP/distribution_plots/simulated_totalsamples.jpeg')
   samples.plot
 dev.off()

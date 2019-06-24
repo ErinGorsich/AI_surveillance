@@ -3,16 +3,18 @@
 #plot base model fit data from simulated data
 #########################################################################################
 #########################################################################################
+library(ggplot2)
+library(dplyr)
 
-# base.fit <- readRDS("/home/webblab/Documents/HP/base_model_fit_sim_6.rds")
-# lambda <- readRDS('/home/webblab/Documents/HP/sim_data_6_lamda.rds')
-base.fit <- readRDS('~/Github/base_model_fit_sim_6.rds')
-lambda <- readRDS('~/Github/sim_data_6_lamda.rds')
+base.fit <- readRDS("/home/webblab/Documents/HP/simulated_results/base_model_fit_sim_6_short20.rds")
+lambda <- readRDS('/home/webblab/Documents/HP/sim_data_6_lamda_short20.rds')
+# base.fit <- readRDS('~/Github/base_model_fit_sim_6.rds')
+# lambda <- readRDS('~/Github/sim_data_6_lamda.rds')
 
-nmonths <- 12
-nyears <- 5
-nhucs <- 191
-nparam <- 2+(12*5*191)
+nmonths <- dim(lambda)[1]
+nyears <- dim(lambda)[2]
+nhucs <- dim(lambda)[3]
+nparam <- 2+(nmonths*nhucs*nyears)
 nchains <- 3
 
 #calculate a mean for each month, year, huc combination
@@ -83,7 +85,7 @@ for (k in 1:nhucs){
   mean.difference[k,1] <- mean.huc[k,1] - mean.huc.true[k,1]
 }
 
-plot <- data.frame(huc = seq(1, 191), lambda.true = mean.huc.true, 
+plot <- data.frame(huc = as.factor(seq(1, nhucs)), lambda.true = mean.huc.true, 
                    lambda.true.max = max.huc.true, lambda.est = mean.huc, 
                    sd.true = sd.huc.true, sd.est = stand.dev.huc, 
                    difference = mean.difference, outlier = outlier$V1)
@@ -109,7 +111,7 @@ outlier.hucs <- ggplot(plot.1, aes(x=huc)) +
   xlab("Watershed") +
   ylab("Prevalence")
 
-plot %>% arrange(difference)
+plot <- plot %>% arrange(difference)
 
 plot.2 <- plot[1:20, ]  
 
@@ -121,12 +123,60 @@ smallest.diff <- ggplot(plot.2, aes(x=huc)) +
   xlab("Watershed") +
   ylab("Difference")
 
-plot.3 <- plot[(191-20):191, ]
+plot.3 <- plot[(nhucs-20):nhucs, ]
 
 largest.diff <- ggplot(plot.3, aes(x=huc)) +
-  geom_point(aes(y=difference, color="darkorange"))+
+  geom_point(aes(y=difference), color="darkorange")+
   geom_errorbar(aes(ymin=lambda.true, ymax=lambda.est), color="darkorange")+
   theme_minimal()+
-  ggtitle("20 Watersheds with the Largest Difference between Tre and Estimated Prevalence")+
+  ggtitle("20 Watersheds with the Largest Difference between True and Estimated Prevalence")+
   xlab("Watershed")+
   ylab("Difference")
+
+plot.4 <- data.frame(month=as.factor(rep(seq(1,12), times=5)), year=as.factor(rep(seq(1,5), each=12)),
+                     fitted.prev = NA, fitted.prev.min=NA, fitted.prev.max=NA,
+                     lambda = NA)
+for (i in 1:nmonths){
+  for (j in 1:nyears){
+    hold <- mean[i,j, ]
+    plot.4$fitted.prev[plot.4$month==i & plot.4$year==j] <- quantile(hold, probs=0.5)
+    plot.4$fitted.prev.min[plot.4$month==i & plot.4$year==j] <- min(hold)
+    plot.4$fitted.prev.max[plot.4$month==i & plot.4$year==j] <- max(hold)
+    hold.1 <- lambda[i,j,]
+    plot.4$lambda[plot.4$month==i & plot.4$year==j] <- quantile(hold.1, probs=0.5)
+  }
+}
+
+fitted.month.mean <- ggplot(plot.4, aes(x=month, y=fitted.prev))+
+  geom_point(color="darkorchid4")+
+  geom_errorbar(aes(ymin=fitted.prev.min, ymax=fitted.prev.max), color="darkorchid4")+
+  facet_grid(.~ year)+
+  theme_minimal()+
+  ggtitle('Fitted Data Mean True Prevalence by Month')+
+  ylab('Mean Fitted True Prevalence')
+
+compare.means <- ggplot(plot.4, aes(x=lambda, y=fitted.prev))+
+  geom_point(color="dodgerblue4")+
+  theme_minimal()+
+  ylim(0, 1)+
+  ggtitle('Given vs. Fitted True Prevalence (Monthly Mean)')
+
+plot.5 <- data.frame(month=as.factor(rep(seq(1,12), times=nyears*nhucs)), year=as.factor(rep(seq(1,5), each=nmonths, times=nhucs)),
+                     huc=rep(seq(1,nhucs), each=nyears*nmonths), fitted.prev=NA, lambda=NA)
+for (i in 1:nmonths){
+  for (j in 1:nyears){
+    for (k in 1:nhucs){
+      plot.5$fitted.prev[plot.5$month==i & plot.5$year==j & plot.5$huc==k] <- mean[i,j,k]
+      plot.5$lambda[plot.5$month==i & plot.5$year==j & plot.5$huc==k] <- lambda[i,j,k]
+    }
+  }
+}
+
+compare <- ggplot(plot.5, aes(x=lambda, y=fitted.prev))+
+  geom_point(color="dodgerblue4")+
+  theme_minimal()+
+  ggtitle('Given vs. Fitted True Prevalence')+
+  ylim(0,1)+
+  ylab('Estimated True Prevalence')+
+  xlab('Given True Prevalence')
+

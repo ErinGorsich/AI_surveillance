@@ -18,8 +18,8 @@ library(coda)
 # nmonths <- dim(y)[1]
 
 #read in n and y matrices with the data from all hucs
-n <- readRDS("data_n_mall_all.rds")
-y <- readRDS("data_y_mall_all.rds")
+n <- readRDS('/home/webblab/Documents/HP/sim_data_6_n_short.rds')
+y <- readRDS('/home/webblab/Documents/HP/sim_data_6_y_short.rds')
 
 #define nsites to match new y matrix
 nsites <- dim(y)[3]
@@ -35,8 +35,8 @@ jags.inits <- function(){
        "pi" = array(runif(nsites*nmonths*nyears), dim = c(nmonths, nyears, nsites)))
 }
 variable.names = c('Se', 'Sp', 'pi')
-nadapt = 100000
-niter = 50000
+nadapt = 30000
+niter = 10000
 thin = 10
 setwd("/home/webblab/Documents/Github/AI_surveillance")
 base.mod <- jags.model(file = "constant_sensitivity.txt", data=jags.data, inits=jags.inits,
@@ -45,15 +45,17 @@ base.mod.fit <- coda.samples(model=base.mod, variable.names = variable.names,
                             n.iter=niter, thin=thin)
 
 setwd("/home/webblab/Documents/HP/simulated_results")
-pdf("base_trace_density_sensitivity_specificity_mall.pdf")
+saveRDS(base.mod.fit, 'base_model_fit_sim_6_short20.rds')
+
+pdf("base_trace_density_sensitivity_specificity_mall_attempt6_short20.pdf")
 plot(base.mod.fit[,1:2])
 dev.off()
 
-pdf("base_sensitivity_autocorrelation_mall.pdf")
+pdf("base_sensitivity_autocorrelation_mall_attempt6_short20.pdf")
 autocorr.plot(base.mod.fit[,'Se'], main="Sensitivity Autocorrelation")
 dev.off() 
 
-pdf("base_specificity_autocorrelation_mall.pdf")
+pdf("base_specificity_autocorrelation_mall_attempt6_short20.pdf")
 autocorr.plot(base.mod.fit[, 'Sp'], main="Specificity Autocorrelation")
 dev.off()
 
@@ -71,11 +73,14 @@ dev.off()
 #                 thin=thin, name="AR1")
 
 #make a queens W matrix
-w <- define.neighborhood("queens")
-D <- diag(rowSums(w))
+setwd("/home/webblab/Documents/Github/AI_surveillance")
+W <- define.neighborhood(method="queens")
+B <- scaleW(W)
+D <- diag(rowSums(W))
+I <- diag(1, nrow = dim(W)[1], ncol = dim(W)[1])
 
 #define data for running JAGS models
-jags.data <- list(nsites=nsites, nmonths=nmonths, nyears=nyears, y=y, n=n, W=w, D=D)
+jags.data <- list(nsites=nsites, nmonths=nmonths, nyears=nyears, y=y, n=n, W=W, I=I)
 jags.inits <- function(){
   list("Se" = runif(1, 0.6, 1), "Sp" = runif(1, 0.6, 1), 
        "pi0" = array(runif(npi), dim = c(nmonths, nyears)),
@@ -87,29 +92,25 @@ jags.inits <- function(){
 #                 variable.names=variable.names, n.chains = 3, n.adapt = nadapt, n.iter=niter,
 #                 thin=thin, name="CAR_queens")
 #run CAR model without the model selection function
-car.mod <- jags.model(file = "car_constant_sensitivity.txt", data=jags.data, inits=jags.inits,
+car.mod <- jags.model(file = "icar_constant_sensitivity.txt", data=jags.data, inits=jags.inits,
                       n.chains=3, n.adapt = nadapt)
 car.mod.fit <- coda.samples(model=car.mod, variable.names = variable.names,
                             n.iter=niter, thin=thin)
-setwd("~Honors Thesis/Thesis Work/Model Selection/Plots")
-saveRDS(car.mod.fit, "CAR_queens.rds")
+setwd("/home/webblab/Documents/HP/simulated_results")
+# saveRDS(car.mod.fit, "CAR_queens.rds")
 
-pd  <- dic.samples(model=car.mod, n.iter = n.iter, thin=thin, type="pD")
-saveRDS(pd, "CAR_queens_dic.rds")
+# pd  <- dic.samples(model=car.mod, n.iter = n.iter, thin=thin, type="pD")
+# saveRDS(pd, "CAR_queens_dic.rds")
 
-pdf("CAR_queens_trace_density_sensitivity_specificity.pdf")
+pdf("CAR_queens_trace_density_sensitivity_specificity_attempt2.pdf")
 plot(car.mod.fit[,1:2])
 dev.off()
 
-pdf("CAR_queens_trace_density_sensitivity_specificity.pdf")
-plot(car.mod.fit[,1:2])
-dev.off()
-
-pdf("CAR_queens_sensitivity_autocorrelation.pdf")
+pdf("CAR_queens_sensitivity_autocorrelation_attempt2.pdf")
 autocorr.plot(car.mod.fit[,'Se'], main="Sensitivity Autocorrelation")
 dev.off()
 
-pdf("CAR_queens_specificity_autocorrelation.pdf")
+pdf("CAR_queens_specificity_autocorrelation_attempt2.pdf")
 autocorr.plot(car.mod.fit[, 'Sp'], main="Specificity Autocorrelation")
 dev.off()
 

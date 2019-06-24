@@ -7,12 +7,12 @@
 library(simstudy)
 library(dplyr)
 
-see <- readRDS("~/Honors Thesis/SP19/AVHS_samplingevent_speciesgroup.rds")
+see <- readRDS('/home/webblab/Documents/HP/AVHS_samplingevent_speciesgroup.rds')
 
 #create data set definitions
 table <- defData(varname = "Species Group", 
-                 formula = "0.87;0.02;0.11", dist = "categorical")
-table <- defData(table, varname = "huc", formula = "1;222", dist = "uniform")
+                 formula = "0.80;0.05;0.15", dist = "categorical")
+table <- defData(table, varname = "huc", formula = "1;194", dist = "uniform")
 
 counts <- table(see$collection.month)
 total <- sum(counts)
@@ -37,17 +37,18 @@ table <- defData(table, varname = "year", formula = "0.219;0.264;0.213;0.135;0.1
 #2007=1, 2008=2, 2009=3, 2010=4, 2015=15
 
 results <- summary(see$AIpcr_susneg)
+results <- results[1:2]
 total <- sum(results)
 probs <- matrix(NA, nrow = 1, ncol = 2)
 for (i in 1:length(results)) {
   probs[i] <- results[i]/total
 }
 probs
-table <- defData(table, varname = "result", formula = "0.881;0.119", dist = "categorical")
+table <- defData(table, varname = "result", formula = "0.882;0.118", dist = "categorical")
 #positive = 2, negative = 1
 
 #generate a dataset
-data <- genData(100, table)
+data <- genData(220000, table)
 
 #trucate huc numbers to whole numbers
 data$HUC <- NA
@@ -126,7 +127,7 @@ for (i in 1:length(chart$total)) {
 }
 chart$apparent.prevalance[is.na(chart$apparent.prevalance)] <- 0
 
-saveRDS(chart, "~/Honors Thesis/SP19/simulated_data.rds")
+saveRDS(chart, '/home/webblab/Documents/HP/simulated_data.rds')
 
 #create an n (total samples) and y (positive samples) matrix for model fitting
 #NO SPECIES GROUP!!!!! set at species.group = 1 (mallards)
@@ -149,5 +150,5 @@ for (i in 1:12) {
   }
 }
 
-saveRDS(n, "~/Honors Thesis/SP19/simulated_n_matrix.rds")
-saveRDS(y, "~/Honors Thesis/SP19/simulated_y_matrix.rds")
+saveRDS(n, '/home/webblab/Documents/HP/simulated_n_matrix.rds')
+saveRDS(y, '/home/webblab/Documents/HP/simulated_y_matrix.rds')

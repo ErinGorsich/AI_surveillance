@@ -273,24 +273,24 @@ sink()
 sink("icar_constant_sensitivity.txt")
 cat("model{
     # Priors
-    Se~dbeta(20.833,4.148)
-    Sp~dbeta(8.403,1.001)
+      Se~dbeta(20.833,4.148)
+      Sp~dbeta(8.403,1.001)
  
     # CAR Priors
-    for (k in 1:nsites){
+      for (k in 1:nsites){
         mualpha[k] <- 0
-    }
-    Omega <- (tau * I) * (I - W)
-    alpha[1:nsites] ~ dmnorm(mualpha[1:nsites], Omega[1:nsites, 1:nsites])
-    tau ~ dgamma(0.1, 0.1)
+      }
+      Omega <- (tau * I) * (I - W)
+      alpha[1:nsites] ~ dmnorm(mualpha[1:nsites], Omega[1:nsites, 1:nsites])
+      tau ~ dgamma(0.1, 0.1)
 
-    for (i in 1:nmonths){
+      for (i in 1:nmonths){
         for (j in 1:nyears){
             lmupi[i, j] ~ dt(0, 0.4, 1)
         }
-    }
+      }
     
-    for(i in 1:nmonths){
+      for(i in 1:nmonths){
         for(j in 1:nyears){
             for(k in 1:nsites){
                 g[i,j,k] <- (Se*pi[i,j,k])+(1-Sp)*(1-pi[i,j,k])
@@ -298,7 +298,7 @@ cat("model{
                 logit(pi[i,j,k]) <- lmupi[i, j] + alpha[k]
             }
         }
-    }
+      }
 }", fill=TRUE)
 sink()
 
